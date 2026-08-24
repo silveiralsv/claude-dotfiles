@@ -1,5 +1,7 @@
 # claude-dotfiles
 
+![claude-dotfiles](./assets/claude-dotfiles.png)
+
 > Install everything by copying [INSTALL.md](./INSTALL.md) into Claude Code and following the prompt.
 
 Personal Claude Code defaults for orchestrated software development. The primary agent investigates, plans, reviews, and approves. Two cheaper Sonnet subagents handle implementation and pull-request publication.

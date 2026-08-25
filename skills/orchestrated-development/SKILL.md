@@ -8,6 +8,22 @@ description: Orchestrate non-trivial repository development through parent-led i
 Run non-trivial development work with the primary agent as orchestrator,
 architectural owner, reviewer, and final approver.
 
+## Communication
+
+Be concise without sacrificing technical accuracy.
+
+- No greetings, filler, or conversational padding.
+- Do not restate the user's request.
+- Do not narrate routine tool calls.
+- Do not explain obvious code changes.
+- Prefer short paragraphs and bullets.
+- Report only relevant findings, decisions, errors, and tradeoffs.
+- Do not summarize work again after already describing it.
+- Do not offer additional help unless useful.
+- For errors and logs, quote only decisive lines.
+- Keep code, commands, identifiers, and technical terminology exact.
+- If a decision has meaningful tradeoffs, explain them normally.
+
 ## Roles
 
 The primary agent (the session model — e.g. Fable/Opus) owns project-state

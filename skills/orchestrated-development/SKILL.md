@@ -1,6 +1,6 @@
 ---
 name: orchestrated-development
-description: Orchestrate non-trivial repository development through parent-led investigation and planning, implementation by the sonnet-max-implementer subagent, parent review, runtime verification with screenshot evidence by the sonnet-evidence-verifier subagent, parent acceptance, and pull-request publication by the sonnet-pr-writer subagent. The primary model acts as architect, reviewer and approver; three subagent workers do the implementation, verification and publication work. Use for features, substantial fixes, maintenance, refactors, and tests — trigger on "orchestrated development", "delega a implementação", "roda com os subagentes sonnet", "implementa com o workflow orquestrado". Do not use for read-only analysis, diagnosis without requested fixes, or tiny mechanical changes.
+description: Orchestrate non-trivial repository development through parent-led investigation and planning, implementation by the opus-xhigh-implementer subagent, parent review, runtime verification with screenshot evidence by the sonnet-evidence-verifier subagent, parent acceptance, and pull-request publication by the sonnet-pr-writer subagent. The primary model acts as architect, reviewer and approver; three subagent workers do the implementation, verification and publication work. Use for features, substantial fixes, maintenance, refactors, and tests — trigger on "orchestrated development", "delega a implementação", "roda com os subagentes sonnet", "implementa com o workflow orquestrado". Do not use for read-only analysis, diagnosis without requested fixes, or tiny mechanical changes.
 ---
 
 # Orchestrated Development
@@ -16,8 +16,8 @@ planning, risk analysis, review of the actual diff, and final acceptance.
 
 Custom agents are:
 
-- `sonnet-max-implementer` (Opus 5, effort xhigh): the only write-heavy
-  implementation and fix worker. The name is historical; it now runs Opus 5.
+- `opus-xhigh-implementer` (Opus 5, effort xhigh): the only write-heavy
+  implementation and fix worker.
 - `sonnet-evidence-verifier` (Sonnet, effort max): the only agent that runs
   the application under test. Exercises the changed behavior and captures
   evidence. Writes only evidence files, never source.
@@ -95,8 +95,8 @@ context to implement without repeating broad investigation.
 
 ### 4. Delegate implementation
 
-Spawn the custom agent named exactly `sonnet-max-implementer` via the Agent
-tool (`subagent_type: "sonnet-max-implementer"`). Provide the task or ticket
+Spawn the custom agent named exactly `opus-xhigh-implementer` via the Agent
+tool (`subagent_type: "opus-xhigh-implementer"`). Provide the task or ticket
 identifier, approved plan, acceptance criteria, relevant architectural
 context, baseline worktree state, excluded scope, and validation expectations.
 
@@ -126,7 +126,7 @@ block the workflow.
 
 ### 6. Correct substantive findings
 
-Send precise corrective instructions to the same `sonnet-max-implementer`
+Send precise corrective instructions to the same `opus-xhigh-implementer`
 agent via SendMessage (using the agent id from step 4). Include the affected
 behavior or location, why it is incorrect, the expected correction, and
 validation that must be rerun.
@@ -158,7 +158,7 @@ documentation, comments, or configuration that nothing executes. Say so
 explicitly; never skip it silently to save time.
 
 A verdict other than Verified returns to step 6: send the evidence and the
-precise failure to the same `sonnet-max-implementer` agent. After the fix,
+precise failure to the same `opus-xhigh-implementer` agent. After the fix,
 re-verify by spawning `sonnet-evidence-verifier` again — never by checking it
 yourself because the remaining doubt is small.
 

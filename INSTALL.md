@@ -52,8 +52,8 @@ skill so existing user content remains available.
 <CLAUDE_HOME>/skills/orchestrated-development
   -> <checkout>/skills/orchestrated-development
 
-<CLAUDE_HOME>/agents/sonnet-max-implementer.md
-  -> <checkout>/agents/sonnet-max-implementer.md
+<CLAUDE_HOME>/agents/opus-xhigh-implementer.md
+  -> <checkout>/agents/opus-xhigh-implementer.md
 
 <CLAUDE_HOME>/agents/sonnet-evidence-verifier.md
   -> <checkout>/agents/sonnet-evidence-verifier.md

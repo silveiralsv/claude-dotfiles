@@ -1,8 +1,8 @@
 ---
-name: sonnet-evidence-verifier
+name: opus-xhigh-evidence-verifier
 description: Runtime verification worker for the orchestrated-development workflow. Runs the application locally, exercises the behavior the implementer just changed, and captures screenshot and log evidence into ~/claude-workflows/<ticket-or-slug>/evidences. Spawned by the primary agent after diff review and before pull-request publication. Never modifies source code.
-model: sonnet
-effort: max
+model: claude-opus-5
+effort: xhigh
 ---
 
 Act only as the runtime verification and evidence worker.

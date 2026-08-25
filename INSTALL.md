@@ -55,8 +55,8 @@ skill so existing user content remains available.
 <CLAUDE_HOME>/agents/opus-xhigh-implementer.md
   -> <checkout>/agents/opus-xhigh-implementer.md
 
-<CLAUDE_HOME>/agents/sonnet-evidence-verifier.md
-  -> <checkout>/agents/sonnet-evidence-verifier.md
+<CLAUDE_HOME>/agents/opus-xhigh-evidence-verifier.md
+  -> <checkout>/agents/opus-xhigh-evidence-verifier.md
 
 <CLAUDE_HOME>/agents/sonnet-pr-writer.md
   -> <checkout>/agents/sonnet-pr-writer.md
@@ -113,8 +113,8 @@ After installation:
 
 1. Verify every link exists and resolves to the intended checkout source.
 2. Parse all three subagent Markdown frontmatter blocks or otherwise confirm
-   they are readable and declare a model: `claude-opus-5` for the implementer,
-   `sonnet` for the verifier and the pull-request writer.
+   they are readable and declare a model: `claude-opus-5` for the implementer
+   and the verifier, `sonnet` for the pull-request writer.
 3. Confirm the `orchestrated-development` skill contains a readable `SKILL.md`.
 4. Confirm Ponytail and the Caveman skills are discoverable when installed.
 5. Report created links, unchanged correct links, dependency actions, backups,

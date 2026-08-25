@@ -1,6 +1,6 @@
 ---
 name: orchestrated-development
-description: Orchestrate non-trivial repository development through parent-led investigation and planning, implementation by the opus-xhigh-implementer subagent, parent review, runtime verification with screenshot evidence by the sonnet-evidence-verifier subagent, parent acceptance, and pull-request publication by the sonnet-pr-writer subagent. The primary model acts as architect, reviewer and approver; three subagent workers do the implementation, verification and publication work. Use for features, substantial fixes, maintenance, refactors, and tests — trigger on "orchestrated development", "delega a implementação", "roda com os subagentes sonnet", "implementa com o workflow orquestrado". Do not use for read-only analysis, diagnosis without requested fixes, or tiny mechanical changes.
+description: Orchestrate non-trivial repository development through parent-led investigation and planning, implementation by the opus-xhigh-implementer subagent, parent review, runtime verification with screenshot evidence by the opus-xhigh-evidence-verifier subagent, parent acceptance, and pull-request publication by the sonnet-pr-writer subagent. The primary model acts as architect, reviewer and approver; three subagent workers do the implementation, verification and publication work. Use for features, substantial fixes, maintenance, refactors, and tests — trigger on "orchestrated development", "delega a implementação", "roda com os subagentes sonnet", "implementa com o workflow orquestrado". Do not use for read-only analysis, diagnosis without requested fixes, or tiny mechanical changes.
 ---
 
 # Orchestrated Development
@@ -18,7 +18,7 @@ Custom agents are:
 
 - `opus-xhigh-implementer` (Opus 5, effort xhigh): the only write-heavy
   implementation and fix worker.
-- `sonnet-evidence-verifier` (Sonnet, effort max): the only agent that runs
+- `opus-xhigh-evidence-verifier` (Opus 5, effort xhigh): the only agent that runs
   the application under test. Exercises the changed behavior and captures
   evidence. Writes only evidence files, never source.
 - `sonnet-pr-writer` (Sonnet, effort medium): the final branch, commit, push,
@@ -44,7 +44,7 @@ directly when delegation would cost substantially more than the change. It
 must still inspect the diff and run proportionate validation.
 
 That allowance covers implementation only. If the change has a runnable
-surface, runtime verification still goes to `sonnet-evidence-verifier` — a
+surface, runtime verification still goes to `opus-xhigh-evidence-verifier` — a
 change small enough to write directly is not thereby small enough to verify
 directly.
 
@@ -140,8 +140,8 @@ efficient. Architecture-sensitive corrections return to the implementer.
 ### 7. Verify the running application and capture evidence
 
 Once the diff is correct, spawn the custom agent named exactly
-`sonnet-evidence-verifier` via the Agent tool
-(`subagent_type: "sonnet-evidence-verifier"`, no model override). Ensure the
+`opus-xhigh-evidence-verifier` via the Agent tool
+(`subagent_type: "opus-xhigh-evidence-verifier"`, no model override). Ensure the
 implementer has finished first — the two must never run at the same time.
 
 Provide the ticket identifier or task slug, the change summary and changed
@@ -159,7 +159,7 @@ explicitly; never skip it silently to save time.
 
 A verdict other than Verified returns to step 6: send the evidence and the
 precise failure to the same `opus-xhigh-implementer` agent. After the fix,
-re-verify by spawning `sonnet-evidence-verifier` again — never by checking it
+re-verify by spawning `opus-xhigh-evidence-verifier` again — never by checking it
 yourself because the remaining doubt is small.
 
 Do not proceed to acceptance on a Partially verified, Not verified, or Blocked
@@ -217,7 +217,7 @@ verdict and evidence directory, architectural decisions worth recording,
 intended base branch, and known limitations or follow-ups.
 
 Do not reach this step without either a Verified verdict from
-`sonnet-evidence-verifier` or an explicitly stated reason the change has no
+`opus-xhigh-evidence-verifier` or an explicitly stated reason the change has no
 runnable surface. A pull request opened on self-assurance instead of captured
 evidence is the failure this workflow exists to prevent.
 
@@ -269,6 +269,6 @@ Whenever work is delegated:
   publication work in the parent.
 - Identify which agent performed the work after it returns.
 - Inspect the actual diff rather than trusting its summary.
-- Never report a change as verified without a `sonnet-evidence-verifier` run
+- Never report a change as verified without a `opus-xhigh-evidence-verifier` run
   behind it. "I checked it myself" is not a verification result, and neither
   is a passing test suite.

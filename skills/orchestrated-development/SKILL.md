@@ -18,7 +18,7 @@ Custom agents are:
 
 - `sonnet-max-implementer` (Sonnet, effort max): the only write-heavy
   implementation and fix worker.
-- `sonnet-evidence-verifier` (Sonnet, effort high): the only agent that runs
+- `sonnet-evidence-verifier` (Sonnet, effort max): the only agent that runs
   the application under test. Exercises the changed behavior and captures
   evidence. Writes only evidence files, never source.
 - `sonnet-pr-writer` (Sonnet, effort medium): the final branch, commit, push,

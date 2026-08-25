@@ -32,7 +32,7 @@ INSTALL.md
 
 - [`orchestrated-development`](./skills/orchestrated-development/SKILL.md) defines investigation, implementation, review, verification, and publication.
 - [`sonnet-max-implementer`](./agents/sonnet-max-implementer.md) is the only write-heavy implementation worker (Sonnet, effort max).
-- [`sonnet-evidence-verifier`](./agents/sonnet-evidence-verifier.md) runs the app and captures evidence, without touching source (Sonnet, effort high).
+- [`sonnet-evidence-verifier`](./agents/sonnet-evidence-verifier.md) runs the app and captures evidence, without touching source (Sonnet, effort max).
 - [`sonnet-pr-writer`](./agents/sonnet-pr-writer.md) handles approved Git and pull-request operations (Sonnet, effort medium).
 
 Verification evidence is written to `~/claude-workflows/<ticket-id-or-slug>/evidences`, outside every repository so it can never be committed into the pull request.

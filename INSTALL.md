@@ -55,6 +55,9 @@ skill so existing user content remains available.
 <CLAUDE_HOME>/agents/sonnet-max-implementer.md
   -> <checkout>/agents/sonnet-max-implementer.md
 
+<CLAUDE_HOME>/agents/sonnet-evidence-verifier.md
+  -> <checkout>/agents/sonnet-evidence-verifier.md
+
 <CLAUDE_HOME>/agents/sonnet-pr-writer.md
   -> <checkout>/agents/sonnet-pr-writer.md
 ```
@@ -109,8 +112,8 @@ prerequisite and the smallest platform-appropriate installation step.
 After installation:
 
 1. Verify every link exists and resolves to the intended checkout source.
-2. Parse both subagent Markdown frontmatter blocks or otherwise confirm they
-   are readable and declare `model: sonnet`.
+2. Parse all three subagent Markdown frontmatter blocks or otherwise confirm
+   they are readable and declare `model: sonnet`.
 3. Confirm the `orchestrated-development` skill contains a readable `SKILL.md`.
 4. Confirm Ponytail and the Caveman skills are discoverable when installed.
 5. Report created links, unchanged correct links, dependency actions, backups,

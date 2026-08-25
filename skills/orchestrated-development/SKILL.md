@@ -1,6 +1,6 @@
 ---
 name: orchestrated-development
-description: Orchestrate non-trivial repository development through parent-led investigation and planning, implementation by the sonnet-max-implementer subagent, parent review and acceptance, and pull-request publication by the sonnet-pr-writer subagent. The primary (superior) model acts as architect, reviewer and approver; the two cheaper Sonnet workers do the write-heavy work. Use for features, substantial fixes, maintenance, refactors, and tests — trigger on "orchestrated development", "delega a implementação", "roda com os subagentes sonnet", "implementa com o workflow orquestrado". Do not use for read-only analysis, diagnosis without requested fixes, or tiny mechanical changes.
+description: Orchestrate non-trivial repository development through parent-led investigation and planning, implementation by the sonnet-max-implementer subagent, parent review, runtime verification with screenshot evidence by the sonnet-evidence-verifier subagent, parent acceptance, and pull-request publication by the sonnet-pr-writer subagent. The primary (superior) model acts as architect, reviewer and approver; the three cheaper Sonnet workers do the implementation, verification and publication work. Use for features, substantial fixes, maintenance, refactors, and tests — trigger on "orchestrated development", "delega a implementação", "roda com os subagentes sonnet", "implementa com o workflow orquestrado". Do not use for read-only analysis, diagnosis without requested fixes, or tiny mechanical changes.
 ---
 
 # Orchestrated Development
@@ -18,19 +18,24 @@ Custom agents are:
 
 - `sonnet-max-implementer` (Sonnet, effort max): the only write-heavy
   implementation and fix worker.
+- `sonnet-evidence-verifier` (Sonnet, effort high): runs the application
+  locally, exercises the changed behavior, and captures evidence. Writes only
+  evidence files, never source.
 - `sonnet-pr-writer` (Sonnet, effort medium): the final branch, commit, push,
   and pull-request worker.
 
-Do not create a reviewer subagent. Architectural review remains with the
-primary agent.
+Do not create an architectural reviewer subagent. Review of the diff and final
+acceptance remain with the primary agent. The evidence verifier is not a
+reviewer — it reports what the running application does, and the primary agent
+decides what that means.
 
 ## Completion boundary
 
-For substantial development requests, branch creation, commit, push, and
-pull-request creation are part of completion unless the user requests
-local-only work, says not to create a pull request, repository instructions
-prohibit it, or authentication, permissions, or external state block
-publication.
+For substantial development requests, runtime verification with captured
+evidence, branch creation, commit, push, and pull-request creation are part of
+completion unless the user requests local-only work, says not to create a pull
+request, repository instructions prohibit it, or authentication, permissions,
+or external state block publication.
 
 Never merge automatically.
 
@@ -127,7 +132,35 @@ preferences handled by formatters or linters.
 The primary agent may directly fix a tiny mechanical issue when clearly more
 efficient. Architecture-sensitive corrections return to the implementer.
 
-### 7. Perform final acceptance
+### 7. Verify the running application and capture evidence
+
+Once the diff is correct, spawn the custom agent named exactly
+`sonnet-evidence-verifier` via the Agent tool
+(`subagent_type: "sonnet-evidence-verifier"`, no model override). Ensure the
+implementer has finished first — the two must never run at the same time.
+
+Provide the ticket identifier or task slug, the change summary and changed
+files, the acceptance criteria to exercise, how to reach the affected behavior
+(route, screen, command, endpoint), and any flags, credentials, personas, or
+seed data the scenario needs. Reaching the changed behavior is the point;
+without a concrete entry point the worker verifies nothing.
+
+Evidence is written to `~/claude-workflows/<ticket-id-or-slug>/evidences`,
+outside every repository so it can never be swept into the pull request.
+
+Skip this step only when the change has no runnable surface at all — pure
+documentation, comments, or configuration that nothing executes. Say so
+explicitly; never skip it silently to save time.
+
+A verdict other than Verified returns to step 6: send the evidence and the
+precise failure to the same `sonnet-max-implementer` agent, then re-verify
+after the fix. Do not proceed to acceptance on a Partially verified,
+Not verified, or Blocked result.
+
+Inspect the evidence yourself. A worker's claim that a screenshot shows the
+expected state is not the same as the screenshot showing it.
+
+### 8. Perform final acceptance
 
 Confirm requirements and acceptance criteria, architectural consistency,
 scope, tests, highest-signal checks, and error handling. Confirm applicable
@@ -138,14 +171,14 @@ Run lint, type checks, builds, smoke tests, schema validation, or integration
 checks when relevant. Update repository planning state and acceptance evidence
 only when the task is genuinely complete.
 
-### 8. Publish the pull request
+### 9. Publish the pull request
 
 After final acceptance, spawn the custom agent named exactly
 `sonnet-pr-writer` via the Agent tool (`subagent_type: "sonnet-pr-writer"`,
 no model override). Provide the approved file scope, ticket or task
-identifier, implementation summary, validation results, architectural
-decisions worth recording, intended base branch, and known limitations or
-follow-ups.
+identifier, implementation summary, validation results, the verification
+verdict and evidence directory, architectural decisions worth recording,
+intended base branch, and known limitations or follow-ups.
 
 Ensure no other write-heavy agent is active. The PR worker may create the
 branch, commit, push, and open the pull request using repository conventions

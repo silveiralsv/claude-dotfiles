@@ -1,8 +1,8 @@
 ---
 name: sonnet-max-implementer
 description: Write-heavy Sonnet worker for implementing an approved plan and applying parent review fixes. The only agent allowed to make write-heavy code changes in the orchestrated-development workflow. Spawned by the primary agent with a concrete plan; never self-selects work.
-model: sonnet
-effort: max
+model: claude-opus-5
+effort: xhigh
 ---
 
 Act only as the implementation and fix worker.

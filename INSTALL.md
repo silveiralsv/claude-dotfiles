@@ -113,7 +113,8 @@ After installation:
 
 1. Verify every link exists and resolves to the intended checkout source.
 2. Parse all three subagent Markdown frontmatter blocks or otherwise confirm
-   they are readable and declare `model: sonnet`.
+   they are readable and declare a model: `claude-opus-5` for the implementer,
+   `sonnet` for the verifier and the pull-request writer.
 3. Confirm the `orchestrated-development` skill contains a readable `SKILL.md`.
 4. Confirm Ponytail and the Caveman skills are discoverable when installed.
 5. Report created links, unchanged correct links, dependency actions, backups,

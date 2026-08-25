@@ -4,7 +4,7 @@
 
 > Install everything by copying [INSTALL.md](./INSTALL.md) into Claude Code and following the prompt.
 
-Personal Claude Code defaults for orchestrated software development. The primary agent investigates, plans, reviews, and approves. Three cheaper Sonnet subagents handle implementation, runtime verification, and pull-request publication.
+Personal Claude Code defaults for orchestrated software development. The primary agent investigates, plans, reviews, and approves. Three subagents handle implementation, runtime verification, and pull-request publication.
 
 ## Workflow
 
@@ -31,13 +31,13 @@ INSTALL.md
 ```
 
 - [`orchestrated-development`](./skills/orchestrated-development/SKILL.md) defines investigation, implementation, review, verification, and publication.
-- [`sonnet-max-implementer`](./agents/sonnet-max-implementer.md) is the only write-heavy implementation worker (Sonnet, effort max).
+- [`sonnet-max-implementer`](./agents/sonnet-max-implementer.md) is the only write-heavy implementation worker (Opus 5, effort xhigh — the name is historical).
 - [`sonnet-evidence-verifier`](./agents/sonnet-evidence-verifier.md) runs the app and captures evidence, without touching source (Sonnet, effort max).
 - [`sonnet-pr-writer`](./agents/sonnet-pr-writer.md) handles approved Git and pull-request operations (Sonnet, effort medium).
 
 Verification evidence is written to `~/claude-workflows/<ticket-id-or-slug>/evidences`, outside every repository so it can never be committed into the pull request.
 
-The primary model is whatever the Claude Code session runs (e.g. Opus/Fable). The subagents explicitly pin `model: sonnet` with different reasoning efforts in their frontmatter.
+The primary model is whatever the Claude Code session runs (e.g. Opus/Fable). Each subagent pins its own model and reasoning effort in its frontmatter: the implementer on `claude-opus-5` at `xhigh`, the verifier and pull-request writer on `sonnet`.
 
 ## Workflow dependencies
 

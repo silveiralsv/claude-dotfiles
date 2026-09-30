@@ -32,9 +32,9 @@ planning, risk analysis, review of the actual diff, and final acceptance.
 
 Custom agents are:
 
-- `opus-xhigh-implementer` (Opus 5, effort xhigh): the only write-heavy
+- `opus-xhigh-implementer` (latest Opus, effort xhigh): the only write-heavy
   implementation and fix worker.
-- `opus-xhigh-evidence-verifier` (Opus 5, effort xhigh): the only agent that runs
+- `opus-xhigh-evidence-verifier` (latest Opus, effort xhigh): the only agent that runs
   the application under test. Exercises the changed behavior and captures
   evidence. Writes only evidence files, never source.
 - `sonnet-pr-writer` (Sonnet, effort medium): the final branch, commit, push,

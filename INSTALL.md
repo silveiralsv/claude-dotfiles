@@ -45,12 +45,18 @@ permissions are required.
 
 ## Create only these links
 
-Create parent directories when missing. Link individual files and the single
-skill so existing user content remains available.
+Create parent directories when missing. Link individual files and skill
+directories so existing user content remains available.
 
 ```text
 <CLAUDE_HOME>/skills/orchestrated-development
   -> <checkout>/skills/orchestrated-development
+
+<CLAUDE_HOME>/skills/cto
+  -> <checkout>/skills/cto
+
+<CLAUDE_HOME>/skills/ste-explain
+  -> <checkout>/skills/ste-explain
 
 <CLAUDE_HOME>/agents/opus-xhigh-implementer.md
   -> <checkout>/agents/opus-xhigh-implementer.md
@@ -107,6 +113,12 @@ If Node.js, `npx`, Git, or Claude Code is missing, do not install a system
 package manager or change shell profiles automatically. Report the missing
 prerequisite and the smallest platform-appropriate installation step.
 
+### herdr-core (optional)
+
+Only the `cto` skill needs herdr-core, the runtime behind the Herdr app.
+Check whether `hc` is on `PATH`. If it is missing, report that `/cto` will
+not work until herdr-core is installed. Do not install it.
+
 ## Validate
 
 After installation:
@@ -115,10 +127,11 @@ After installation:
 2. Parse all three subagent Markdown frontmatter blocks or otherwise confirm
    they are readable and declare a model: `opus` for the implementer
    and the verifier, `sonnet` for the pull-request writer.
-3. Confirm the `orchestrated-development` skill contains a readable `SKILL.md`.
+3. Confirm the `orchestrated-development`, `cto`, and `ste-explain` skills
+   each contain a readable `SKILL.md`.
 4. Confirm Ponytail and the Caveman skills are discoverable when installed.
 5. Report created links, unchanged correct links, dependency actions, backups,
-   and blockers.
+   whether `hc` is available, and blockers.
 6. Tell the user to start a new Claude Code session so skills and subagents
    are reloaded.
 

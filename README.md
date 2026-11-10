@@ -17,6 +17,16 @@ Personal Claude Code defaults for orchestrated software development. The primary
 
 Small mechanical changes can stay in the primary agent when delegation would cost more than the work.
 
+## CTO and Leads
+
+To run several tickets at once, start `/cto` in a Herdr tab. The work has three levels, no more:
+
+1. **CTO**: one session per Herdr space. It takes tickets, opens one Lead tab per ticket, keeps the queue and the status board, and relays each plan and blocker to you. It never reviews code.
+2. **Lead**: one session per ticket, in its own tab. It runs `orchestrated-development` and owns the ticket from plan to pull request.
+3. **Workers**: the three subagents above. The Lead calls them; they never get a tab.
+
+You approve twice per ticket: the plan and the pull request. See [`cto`](./skills/cto/SKILL.md).
+
 ## Contents
 
 ```text
@@ -25,12 +35,18 @@ agents/
   opus-xhigh-evidence-verifier.md
   sonnet-pr-writer.md
 skills/
+  cto/
+    SKILL.md
   orchestrated-development/
+    SKILL.md
+  ste-explain/
     SKILL.md
 INSTALL.md
 ```
 
 - [`orchestrated-development`](./skills/orchestrated-development/SKILL.md) defines investigation, implementation, review, verification, and publication.
+- [`cto`](./skills/cto/SKILL.md) coordinates one Lead per ticket in a Herdr space.
+- [`ste-explain`](./skills/ste-explain/SKILL.md) writes explanations and plans in ASD-STE100 Simplified Technical English.
 - [`opus-xhigh-implementer`](./agents/opus-xhigh-implementer.md) is the only write-heavy implementation worker (latest Opus, effort xhigh).
 - [`opus-xhigh-evidence-verifier`](./agents/opus-xhigh-evidence-verifier.md) runs the app and captures evidence, without touching source (latest Opus, effort xhigh).
 - [`sonnet-pr-writer`](./agents/sonnet-pr-writer.md) handles approved Git and pull-request operations (Sonnet, effort medium).
@@ -46,12 +62,16 @@ The primary model is whatever the Claude Code session runs (e.g. Opus/Fable). Ea
 
 The installation prompt detects these dependencies and installs only what is missing. Their absence never blocks the workflow.
 
+herdr-core (`hc`), the runtime behind the Herdr app, is optional. Only `/cto` needs it. The installation prompt reports when it is missing and does not install it.
+
 ## Installation model
 
 The installer creates links only for files owned by this repository:
 
 ```text
 ~/.claude/skills/orchestrated-development
+~/.claude/skills/cto
+~/.claude/skills/ste-explain
 ~/.claude/agents/opus-xhigh-implementer.md
 ~/.claude/agents/opus-xhigh-evidence-verifier.md
 ~/.claude/agents/sonnet-pr-writer.md

@@ -61,7 +61,32 @@ Run these steps on every `/cto`.
    herdr-app do tab.rename --id "$TAB" --name cto
    ```
 
-5. Recover earlier work:
+5. Open the board pane. The `cto-board` Herdr mod shows the board live, to
+   the right of this session. Skip this step when the mod is not installed.
+   `herdr-app ls` lists terminals only, not mod panes. To find a board that
+   is already open in this tab, read the tab tree from the core's
+   `herdr-app` document: a mod pane is a block with `content.mod`.
+
+   ```sh
+   BOARD="${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/cto-board/main.js"
+   if [ -f "$BOARD" ]; then
+     SPACE=$(hc get "$HC_TERMINAL_ID" --json | jq -r '.labels["herdr.space"]')
+     PANE=$(herdr-app ls | jq -r --arg t "$HC_TERMINAL_ID" '.spaces[].tabs[].terminals[] | select(.terminal == $t) | .pane')
+     TAB=$(herdr-app ls | jq -r --arg t "$HC_TERMINAL_ID" '.spaces[].tabs[] | select(any(.terminals[]; .terminal == $t)) | .id')
+     OPEN=$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"doc.get","params":{"name":"herdr-app"}}' | hc connect \
+       | jq --arg tab "$TAB" '[.result.value.spaces[].tabs[] | select(.id == $tab) | .. | objects | select(.content.mod? == "cto-board")] | length')
+     if [ -n "$PANE" ] && [ "$OPEN" = 0 ]; then
+       WAS=$(herdr-app status | jq -r '.focused_pane')
+       herdr-app do pane.split "{\"direction\":\"right\",\"pane\":\"$PANE\",\"mod\":\"cto-board\",\"props\":{\"space\":\"$SPACE\"}}"
+       if [ "$WAS" = "$PANE" ]; then herdr-app do pane.focus --pane "$PANE"; fi
+     fi
+   fi
+   ```
+
+   The split can move the focus to the new pane. The last line gives the
+   focus back to this session when it had the focus before.
+
+6. Recover earlier work:
    - For each live Lead whose `parent` is not `$HC_TERMINAL_ID`, run
      `hc send <lead> "CTO address changed: report with hc send $HC_TERMINAL_ID"`.
      These Leads are not your children, so hc does not notify you when they
@@ -82,7 +107,7 @@ Run these steps on every `/cto`.
      the user to resume it (spawn a new Lead with the same state file and
      the same worktree) or to cancel it.
 
-6. Show the board and ask the user what to do.
+7. Show the board and ask the user what to do.
 
 ## Triage
 
@@ -243,7 +268,8 @@ Show a table built from each state file's frontmatter and the live hc status:
 | ------ | ---- | --- | ------ | ------- | ----------- |
 
 Show it on boot and when the user asks. After each event, give a one-line
-update.
+update. The `cto-board` pane shows the same data live; keep the table in the
+chat too.
 
 ## Close
 

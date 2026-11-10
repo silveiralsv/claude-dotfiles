@@ -268,7 +268,11 @@ with these rules:
    `verifying` (steps 7–8), `publishing` (step 9), `pr_open`, `done`, and
    `blocked` or `failed` when you report them. Record decisions in
    `## Decisions` and every file you change in `## Files touched`. The CTO
-   uses that list to find conflicts between tickets.
+   uses that list to find conflicts between tickets. At every status change
+   and every report, append one line to `## Log`:
+   `- <ISO 8601 time with offset> <what happened>`, for example
+   `- 2026-11-10T14:05:00-03:00 plan_ready: plan.md`. The CTO board shows
+   these lines.
 3. Plan gate. After step 3, write the plan to
    `~/claude-workflows/<TICKET>/plan.md`, in the `/ste-explain` style when
    that skill is available. Set `plan_ready`, send `PLAN_READY`, and stop.

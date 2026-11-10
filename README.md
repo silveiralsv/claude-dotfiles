@@ -27,6 +27,8 @@ To run several tickets at once, start `/cto` in a Herdr tab. The work has three 
 
 You approve twice per ticket: the plan and the pull request. See [`cto`](./skills/cto/SKILL.md).
 
+The optional [`cto-board`](./herdr/mods/cto-board/main.js) Herdr mod opens beside the CTO chat and shows the same board live: what needs you, each Lead's stage, the queue, and recent activity from the state files. It is read-only.
+
 ## Contents
 
 ```text
@@ -41,6 +43,11 @@ skills/
     SKILL.md
   ste-explain/
     SKILL.md
+herdr/
+  mods/
+    cto-board/
+      main.js
+      parse.js
 INSTALL.md
 ```
 

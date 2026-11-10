@@ -32,9 +32,9 @@ planning, risk analysis, review of the actual diff, and final acceptance.
 
 Custom agents are:
 
-- `opus-xhigh-implementer` (Opus 5, effort xhigh): the only write-heavy
+- `opus-xhigh-implementer` (latest Opus, effort xhigh): the only write-heavy
   implementation and fix worker.
-- `opus-xhigh-evidence-verifier` (Opus 5, effort xhigh): the only agent that runs
+- `opus-xhigh-evidence-verifier` (latest Opus, effort xhigh): the only agent that runs
   the application under test. Exercises the changed behavior and captures
   evidence. Writes only evidence files, never source.
 - `sonnet-pr-writer` (Sonnet, effort medium): the final branch, commit, push,
@@ -249,6 +249,52 @@ agent. The PR worker must not redesign or hide failing validation.
 
 Never merge, force-push, rewrite unrelated history, discard unrelated changes,
 or use destructive Git operations.
+
+## Running as a Lead under a CTO
+
+This section applies only when the first message says this session is a Lead
+under a CTO and gives the CTO address and the state file. Otherwise, ignore
+it.
+
+The Lead is the technical owner of its ticket. It runs the workflow above,
+with these rules:
+
+1. The session starts in the worktree named in the brief. Work only there,
+   and never in the main checkout. If the cwd is not that worktree, send
+   `BLOCKED`. A plan-only Lead starts in the main checkout and never edits
+   it.
+2. Own the state file. Update `status` and `updated` at every phase change:
+   `planning` (steps 1–3), `plan_ready`, `implementing` (steps 4–6),
+   `verifying` (steps 7–8), `publishing` (step 9), `pr_open`, `done`, and
+   `blocked` or `failed` when you report them. Record decisions in
+   `## Decisions` and every file you change in `## Files touched`. The CTO
+   uses that list to find conflicts between tickets.
+3. Plan gate. After step 3, write the plan to
+   `~/claude-workflows/<TICKET>/plan.md`, in the `/ste-explain` style when
+   that skill is available. Set `plan_ready`, send `PLAN_READY`, and stop.
+   Do not delegate implementation before an `APPROVED` message. On
+   `CHANGES: <text>`, revise the plan and send `PLAN_READY` again. For a
+   plan-only ticket, `APPROVED` ends the work: set `done` and send `DONE`.
+4. Report to the CTO with one line:
+
+   ```sh
+   hc send <CTO address> "<TICKET> <STATE> <path-or-url>"
+   ```
+
+   `<STATE>` is `PLAN_READY`, `BLOCKED`, `PR_OPEN`, `DONE`, or `FAILED`. Put
+   long text in files under `~/claude-workflows/<TICKET>/`. When the user
+   must make a decision, write the question to a file and send `BLOCKED`
+   with its path. Do not ask in this tab.
+5. Call workers only through the Agent tool. Never start agents with
+   `hc run`, never open tabs, and never start other Leads.
+6. Other Leads can run apps at the same time. Give the evidence verifier a
+   port that no other live process uses. Never stop a process that this Lead
+   did not start.
+7. After `PR_OPEN`, follow the repository's post-PR policy when one exists
+   (for example a babysit skill). When nothing remains, set `done` and send
+   `DONE`.
+8. If a message says the CTO address changed, report to the new address from
+   then on.
 
 ## Parent-owned decisions
 

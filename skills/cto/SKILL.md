@@ -115,6 +115,10 @@ For each request, decide:
 
 - **Ticket**: the tracker id, for example `APO-4796`. Without one, use a
   short task slug as the id.
+- **Title**: the ticket title from the tracker. Read it with the Linear or
+  Shortcut tools when they are available. Without a ticket, write a short
+  summary of the request, at most 60 characters.
+- **URL**: the ticket link, or `none`.
 - **Slug**: the lowercase ticket id, for example `apo-4796`. The Lead name is
   `lead-<slug>`: 1–32 characters of `a-z 0-9 - _`, unique among live
   terminals.
@@ -133,12 +137,14 @@ new ticket `queued` until the other Lead closes.
 ## State file
 
 At intake, create `~/claude-workflows/<TICKET>/state.md` with status
-`queued`. After the spawn, the Lead owns the file. Write it again only to set
-`cancelled` when the user cancels.
+`queued`. After the spawn, the Lead owns the file and keeps `title` and
+`url`. Write it again only to set `cancelled` when the user cancels.
 
 ```markdown
 ---
 ticket: APO-4796
+title: Export bookings as CSV
+url: https://linear.app/acme/issue/APO-4796/export-bookings-as-csv
 type: feature
 space: <the literal $SPACE id>
 repo: ~/www/app-events
@@ -160,7 +166,8 @@ updated: 2026-11-10T14:05:00-03:00
 `status` is one of `queued`, `planning`, `plan_ready`, `implementing`,
 `verifying`, `publishing`, `pr_open`, `done`, `blocked`, `failed`,
 `cancelled`. `updated` is an ISO 8601 time. For a `plan-only` ticket, set
-`worktree: none`.
+`worktree: none`. Without a ticket link, set `url: none`. The `cto-board`
+pane shows the title and links the ticket id to `url`.
 
 ## Queue
 
@@ -184,6 +191,8 @@ updated: 2026-11-10T14:05:00-03:00
 
    CTO address: <your $HC_TERMINAL_ID, for example t30>
    State file: ~/claude-workflows/<TICKET>/state.md
+   Title: <ticket title>
+   URL: <ticket link | none>
    Type: <feature | bug | plan-only>
    Repo: <main checkout>
    Worktree: <worktree path | none>
@@ -222,17 +231,20 @@ updated: 2026-11-10T14:05:00-03:00
 5. Check `first_message.sent` in the launch JSON. If it is false, run
    `hc read lead-<slug>` before you send anything. Never resend blindly.
 
-6. Rename the new tab to the Lead name:
+6. Rename the new tab for the user. The tab name is `<TICKET>` and 2–4
+   lowercase words from the title, at most 32 characters, for example
+   `sc-16214 arch declined`:
 
    ```sh
    LEAD=$(hc get lead-<slug> --json | jq -r '.address')
    LEAD_TAB=$(herdr-app ls | jq -r --arg t "$LEAD" '.spaces[].tabs[] | select(any(.terminals[]; .terminal == $t)) | .id')
-   test -n "$LEAD_TAB" && herdr-app do tab.rename --id "$LEAD_TAB" --name lead-<slug>
+   test -n "$LEAD_TAB" && herdr-app do tab.rename --id "$LEAD_TAB" --name "<tab name>"
    ```
 
-   Never run `tab.rename` without an id: it would rename the selected tab,
-   which is usually the CTO's own tab. An empty `LEAD_TAB` means the tab is
-   not listed yet: run the snippet again.
+   The tab name is only a label. The hc name `lead-<slug>` is the only
+   address you use for the Lead. Never run `tab.rename` without an id: it
+   would rename the selected tab, which is usually the CTO's own tab. An
+   empty `LEAD_TAB` means the tab is not listed yet: run the snippet again.
 
 ## Listen and relay
 

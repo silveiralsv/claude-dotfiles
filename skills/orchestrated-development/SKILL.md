@@ -263,7 +263,8 @@ with these rules:
    and never in the main checkout. If the cwd is not that worktree, send
    `BLOCKED`. A plan-only Lead starts in the main checkout and never edits
    it.
-2. Own the state file. Update `status` and `updated` at every phase change:
+2. Own the state file, and keep its `title` and `url`. Update `status` and
+   `updated` at every phase change:
    `planning` (steps 1–3), `plan_ready`, `implementing` (steps 4–6),
    `verifying` (steps 7–8), `publishing` (step 9), `pr_open`, `done`, and
    `blocked` or `failed` when you report them. Record decisions in

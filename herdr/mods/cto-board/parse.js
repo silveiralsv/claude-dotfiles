@@ -16,18 +16,36 @@ export function parseTime(s) {
   return new Date(ms);
 }
 
+// A Linear issue or Shortcut story URL; it ends before any "#..." or "?...".
+const TRACKER = /https:\/\/(?:linear\.app\/[\w-]+\/issue\/([a-z0-9]+-\d+)|app\.shortcut\.com\/[\w-]+\/story\/(\d+))(?:\/([\w-]+))?/gi;
+
+// The ticket's link and title: frontmatter `url:` and `title:` win. Else the first tracker URL in
+// the text whose id is this ticket, titled from its slug. A URL of another ticket is never used.
+function link(state, text) {
+  const id = (state.ticket ?? "").toLowerCase();
+  const m = [...text.matchAll(TRACKER)].find((m) => (m[1] ? m[1].toLowerCase() === id : m[2] === /^(?:sc-)?(\d+)$/.exec(id)?.[1]));
+  const url = /^https?:\/\/\S+$/.test(state.url ?? "") ? state.url : m?.[0] ?? null;
+  const title = state.title || (m?.[3] ? m[3].replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase()) : null);
+  const host = /^https?:\/\/([^/?#:]+)/.exec(url ?? "")?.[1]?.toLowerCase();
+  const source = !host ? null : host === "linear.app" ? "Linear" : /(^|\.)shortcut\.com$/.test(host) ? "Shortcut" : host;
+  return { url, title, source };
+}
+
 // A state.md: frontmatter fields, the Log as { at, text }, and how many files it touched.
-export function parseState(text) {
+// `ticket`: the id when the frontmatter has none (the folder name).
+export function parseState(text, ticket) {
   const lines = text.split(/\r?\n/);
   const state = {};
   let body = 0;
   if (lines[0]?.trim() === "---") {
     for (body = 1; body < lines.length && lines[body].trim() !== "---"; body++) {
       const m = /^([\w-]+):\s*(.*)$/.exec(lines[body]);
-      if (m) state[m[1]] = m[2].trim();
+      if (m) state[m[1]] = m[2].trim().replace(/^(["'])(.*)\1$/, "$2");
     }
     body++;
   }
+  state.ticket ||= ticket;
+  Object.assign(state, link(state, text));
   const sections = {};
   let bullets = null;
   for (const l of lines.slice(body)) {

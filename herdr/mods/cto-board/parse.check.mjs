@@ -101,6 +101,26 @@ assert.equal(prUrl(parseState(`## Log\n\n- ${pr}\n`).last.text), "https://github
 assert.equal(prUrl("CI green, awaiting review"), null);
 assert.equal(parseState("no frontmatter at all").last, null);
 
+// Title and link. sc-16306 has no title or url field: its log names the story with a slug and a fragment.
+const story = "https://app.shortcut.com/affinity-advisors/story/16306/bdi-staging-quote-error";
+const s16306link = parseState(`---\nticket: sc-16306\n---\n\n## Log\n\n- 2026-11-10T13:10 see ${story}#activity-16326 (other: https://app.shortcut.com/affinity-advisors/story/16300/other-story)\n`);
+assert.deepEqual([s16306link.title, s16306link.url, s16306link.source], ["Bdi staging quote error", story, "Shortcut"]);
+// Frontmatter wins, quotes come off; the folder name is the ticket when the frontmatter has none.
+const fm = parseState(`---\ntitle: "Arch: declined quotes"\nurl: https://linear.app/acme/issue/APO-4796\n---\n\n- ${story}\n`, "apo-4796");
+assert.deepEqual([fm.ticket, fm.title, fm.url, fm.source], ["apo-4796", "Arch: declined quotes", "https://linear.app/acme/issue/APO-4796", "Linear"]);
+// Linear, ticket id in any case; with and without a slug; "url: none" falls back to the text.
+const lin = (text) => { const s = parseState(`---\nticket: APO-4796\nurl: none\n---\n${text}\n`); return [s.title, s.url, s.source]; };
+assert.deepEqual(lin("https://linear.app/acme/issue/apo-4796/export-bookings-as-csv?x=1"), ["Export bookings as csv", "https://linear.app/acme/issue/apo-4796/export-bookings-as-csv", "Linear"]);
+assert.deepEqual(lin("(https://linear.app/acme/issue/APO-4796)."), [null, "https://linear.app/acme/issue/APO-4796", "Linear"]);
+// Another ticket's URL is never used; no URL gives no title and no link.
+assert.deepEqual(lin("https://linear.app/acme/issue/APO-4797/other-thing and https://app.shortcut.com/a/story/47960/x"), [null, null, null]);
+assert.deepEqual(lin("no links"), [null, null, null]);
+// A Linear-style id never claims the Shortcut story with its digits.
+assert.deepEqual(lin("https://app.shortcut.com/a/story/4796/unrelated-story"), [null, null, null]);
+// Another host: its name is the source.
+const gh = parseState(`---\nticket: x-1\ntitle: Fix the build\nurl: https://github.com/acme/app/issues/12\n---\n`);
+assert.deepEqual([gh.title, gh.source], ["Fix the build", "github.com"]);
+
 // Stage mapping.
 const names = (status) => steps(status).map((x) => `${x.state}:${x.name}`).join(" ");
 assert.equal(names("planning"), "current:Plano todo:Implementa todo:Verifica todo:PR todo:Fim");

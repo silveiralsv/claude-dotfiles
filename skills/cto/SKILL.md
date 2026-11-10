@@ -92,20 +92,40 @@ Run these steps on every `/cto`.
      These Leads are not your children, so hc does not notify you when they
      block or exit. Check them with `hc get <lead> --json` each time you
      build the board.
-   - Find the open state files of this space:
+   - Find the open state files of this space. A `done` ticket whose pull
+     request is still open counts as open:
 
      ```sh
      export SPACE=$(hc get "$HC_TERMINAL_ID" --json | jq -r '.labels["herdr.space"]')
      find ~/claude-workflows -mindepth 2 -maxdepth 2 -name state.md \
        | while read -r f; do
-           if grep -qx "space: $SPACE" "$f" && ! grep -qxE 'status: (done|cancelled)' "$f"; then echo "$f"; fi
+           grep -qx "space: $SPACE" "$f" || continue
+           if ! grep -qxE 'status: (done|cancelled)' "$f"; then echo "$f"; continue; fi
+           grep -qx 'status: done' "$f" || continue
+           if grep -q '^pr:' "$f"; then
+             pr=$(sed -n 's/^pr: *\(https:[^ ]*\).*/\1/p' "$f" | head -1)
+           else
+             pr=$(grep -oE 'https://github\.com/[^/ ]+/[^/ ]+/pull/[0-9]+' "$f" | tail -1)
+           fi
+           [ -n "$pr" ] || continue
+           st=$(gh pr view "$pr" --json state -q .state 2>&1)
+           case "$st" in
+             OPEN) echo "$f (done, but $pr is still open)" ;;
+             MERGED|CLOSED) ;;
+             *) echo "$f (done, could not check $pr: $st)" ;;
+           esac
          done
      ```
 
    - Put `queued` tickets back in the queue.
    - A ticket that is not `queued` and has no live Lead is an orphan. Ask
      the user to resume it (spawn a new Lead with the same state file and
-     the same worktree) or to cancel it.
+     the same worktree) or to cancel it. For a `pr_open` ticket, or a `done`
+     ticket with an open pull request, add `Resume: watch <url>` to the
+     brief: the new Lead skips the plan and works only on that pull request
+     until it merges.
+   - A "could not check" line usually means that `gh` is not logged in.
+     Show it to the user before you decide on that ticket.
 
 7. Show the board and ask the user what to do.
 
@@ -150,6 +170,7 @@ space: <the literal $SPACE id>
 repo: ~/www/app-events
 worktree: ~/www/app-events-apo-4796
 lead: lead-apo-4796
+pr: none
 status: queued
 updated: 2026-11-10T14:05:00-03:00
 ---
@@ -166,15 +187,20 @@ updated: 2026-11-10T14:05:00-03:00
 `status` is one of `queued`, `planning`, `plan_ready`, `implementing`,
 `verifying`, `publishing`, `pr_open`, `done`, `blocked`, `failed`,
 `cancelled`. `updated` is an ISO 8601 time. For a `plan-only` ticket, set
-`worktree: none`. Without a ticket link, set `url: none`. The `cto-board`
+`worktree: none`. Without a ticket link, set `url: none`. The Lead sets `pr`
+to the pull request URL when it opens one. The `cto-board`
 pane shows the title and links the ticket id to `url`.
 
 ## Queue
 
 - Run at most 3 live Leads by default. The user can change the limit in the
   session.
+- A Lead in `pr_open` does not count toward the limit, also while it fixes
+  checks or review findings on its pull request.
 - When the limit is reached, a new ticket stays `queued`.
-- When a Lead closes, start the queued ticket with the oldest `updated`.
+- When a Lead closes or sends `PR_OPEN`, start the queued ticket with the
+  oldest `updated`. A ticket held for a conflict waits until the other Lead
+  closes.
 
 ## Spawn a Lead
 
@@ -263,9 +289,17 @@ A report is one line: `<TICKET> <STATE> <path-or-url>`.
   `APPROVED` ends the work, and the Lead then sends `DONE`.
 - `BLOCKED <path>`: show the question to the user. Relay the answer with
   `hc send`.
-- `PR_OPEN <url>`: tell the user. Do not close the Lead yet: it may still
-  follow the PR under the repository's policy.
-- `DONE`: close the Lead.
+- `PR_OPEN <url>`: tell the user. The Lead stays open and watches the pull
+  request until it is merged.
+- `DONE`: when the state file names a pull request, check it first with
+  `gh pr view <url> --json state -q .state`. The pull request is the `pr:`
+  field; an older file without that field uses the last
+  `github.com/.../pull/<n>` URL in it. `pr: none` means no pull request.
+  - `MERGED`, or no pull request: close the Lead.
+  - `OPEN`: do not close the Lead. Run
+    `hc send <lead> "PR <url> is not merged. Set pr_open and keep watching it until it merges."`
+    and tell the user.
+  - `CLOSED` without a merge: ask the user to close the Lead or to keep it.
 - `FAILED <path>`: show why. Ask the user to retry or cancel.
 
 When hc tells you a Lead is `blocked` (a permission prompt), has an `error`,
@@ -285,6 +319,9 @@ chat too.
 
 ## Close
 
+- Close a Lead only after its `DONE` passes the merge check, when its pull
+  request was closed without a merge and the user agrees, or when the user
+  cancels the ticket. A Lead with an open pull request stays open.
 - Run `hc kill lead-<slug>; hc rm lead-<slug>`.
 - Keep the state file and the evidence.
 - Never delete a worktree. When the ticket has one, tell the user where it

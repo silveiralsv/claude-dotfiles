@@ -295,11 +295,32 @@ with these rules:
 6. Other Leads can run apps at the same time. Give the evidence verifier a
    port that no other live process uses. Never stop a process that this Lead
    did not start.
-7. After `PR_OPEN`, follow the repository's post-PR policy when one exists
-   (for example a babysit skill). When nothing remains, set `done` and send
-   `DONE`.
+7. After `PR_OPEN`, stay open until the pull request is merged. Write its URL
+   to `pr:` in the state file. Follow the repository's post-PR policy when one
+   exists (for example a babysit or autopilot skill). Otherwise, watch the
+   pull request yourself: schedule a check every 15 minutes with the
+   session's scheduler (for example `CronCreate`). Arm it again when the
+   scheduler expires it. Never block in a wait loop.
+
+   ```sh
+   gh pr view <url> --json state,reviewDecision,statusCheckRollup
+   ```
+
+   - `MERGED`: do the repository's post-merge steps (for example move the
+     ticket), stop the watch, set `done`, and send `DONE <url>`.
+   - `CLOSED` without a merge: send `BLOCKED` with a file that says so.
+   - Failed checks or requested changes: fix them through steps 4–9 when the
+     cause is clear. Otherwise send `BLOCKED` with the details.
+
+   Never send `DONE` while the pull request is open, even when the checks
+   pass and only a human review remains. Never merge it yourself, unless the
+   repository's post-PR policy does the merge (for example a babysit skill
+   that merges after the required approvals).
 8. If a message says the CTO address changed, report to the new address from
    then on.
+9. If the brief says `Resume: watch <url>`, the work is already done and only
+   the pull request remains. Set `pr_open`, skip steps 1–9 and the plan gate,
+   and go to rule 7.
 
 ## Parent-owned decisions
 

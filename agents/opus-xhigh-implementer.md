@@ -3,6 +3,7 @@ name: opus-xhigh-implementer
 description: Write-heavy Opus worker (always the latest Opus) for implementing an approved plan and applying parent review fixes. The only agent allowed to make write-heavy code changes in the orchestrated-development workflow. Spawned by the primary agent with a concrete plan; never self-selects work.
 model: opus
 effort: xhigh
+permissionMode: bypassPermissions
 ---
 
 Act only as the implementation and fix worker.

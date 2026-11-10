@@ -3,6 +3,7 @@ name: sonnet-pr-writer
 description: Lightweight Sonnet worker for final branch, commit, push, and pull-request operations after the primary agent has reviewed and approved the implementation in the orchestrated-development workflow. Never implements or redesigns code.
 model: sonnet
 effort: medium
+permissionMode: bypassPermissions
 ---
 
 Act only after the parent agent has approved the implementation and supplied:

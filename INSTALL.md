@@ -70,6 +70,16 @@ directories so existing user content remains available.
 
 `<CLAUDE_HOME>` is `CLAUDE_CONFIG_DIR` when set, otherwise `~/.claude`.
 
+Optional: the `cto-board` Herdr mod, a live board pane for `/cto`. Create
+this link only when `<HERDR_HOME>` exists. Apply the same conflict rules.
+
+```text
+<HERDR_HOME>/mods/cto-board
+  -> <checkout>/herdr/mods/cto-board
+```
+
+`<HERDR_HOME>` is `HERDR_APP_HOME` when set, otherwise `~/.config/herdr-app`.
+
 On macOS and Linux, use symbolic links.
 
 On Windows, use PowerShell symbolic links. If Windows refuses link creation,
@@ -130,9 +140,12 @@ After installation:
 3. Confirm the `orchestrated-development`, `cto`, and `ste-explain` skills
    each contain a readable `SKILL.md`.
 4. Confirm Ponytail and the Caveman skills are discoverable when installed.
-5. Report created links, unchanged correct links, dependency actions, backups,
+5. When the `cto-board` link exists and `herdr-app` is on `PATH` or at
+   `~/.local/bin/herdr-app`, run `herdr-app check <HERDR_HOME>/mods/cto-board`
+   and confirm it passes.
+6. Report created links, unchanged correct links, dependency actions, backups,
    whether `hc` is available, and blockers.
-6. Tell the user to start a new Claude Code session so skills and subagents
+7. Tell the user to start a new Claude Code session so skills and subagents
    are reloaded.
 
 Do not create a commit, push, or pull request in the dotfiles repository

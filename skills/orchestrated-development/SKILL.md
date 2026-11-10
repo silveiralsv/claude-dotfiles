@@ -263,12 +263,17 @@ with these rules:
    and never in the main checkout. If the cwd is not that worktree, send
    `BLOCKED`. A plan-only Lead starts in the main checkout and never edits
    it.
-2. Own the state file. Update `status` and `updated` at every phase change:
+2. Own the state file, and keep its `title` and `url`. Update `status` and
+   `updated` at every phase change:
    `planning` (steps 1–3), `plan_ready`, `implementing` (steps 4–6),
    `verifying` (steps 7–8), `publishing` (step 9), `pr_open`, `done`, and
    `blocked` or `failed` when you report them. Record decisions in
    `## Decisions` and every file you change in `## Files touched`. The CTO
-   uses that list to find conflicts between tickets.
+   uses that list to find conflicts between tickets. At every status change
+   and every report, append one line to `## Log`:
+   `- <ISO 8601 time with offset> <what happened>`, for example
+   `- 2026-11-10T14:05:00-03:00 plan_ready: plan.md`. The CTO board shows
+   these lines.
 3. Plan gate. After step 3, write the plan to
    `~/claude-workflows/<TICKET>/plan.md`, in the `/ste-explain` style when
    that skill is available. Set `plan_ready`, send `PLAN_READY`, and stop.

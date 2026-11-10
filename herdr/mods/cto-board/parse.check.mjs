@@ -99,6 +99,13 @@ assert.equal(mdPath(s16214.last.text, "/d", "/h"), "/d/plan.md");
 const pr = "2026-11-10T14:17:37-03:00 PR #3314 open https://github.com/Affinity-Advisors/affinity-platform/pull/3314 (commit 5c450e3d8); CI running";
 assert.equal(prUrl(parseState(`## Log\n\n- ${pr}\n`).last.text), "https://github.com/Affinity-Advisors/affinity-platform/pull/3314");
 assert.equal(prUrl("CI green, awaiting review"), null);
+assert.equal(prUrl("closed https://github.com/o/r/pull/1, reopened as https://github.com/o/r/pull/2"), "https://github.com/o/r/pull/2");
+// The card's PR: frontmatter `pr:` wins over the log; `pr: none` or no field falls back to the last PR URL in the file.
+const log = "## Log\n\n- 2026-11-10T14:17 PR open https://github.com/o/r/pull/7\n- 2026-11-10T14:30 CodeRabbit asked for a change\n";
+assert.equal(parseState(`---\npr: https://github.com/o/r/pull/9\n---\n\n${log}`).pr, "https://github.com/o/r/pull/9");
+assert.equal(parseState(`---\npr: none\n---\n\n${log}`).pr, "https://github.com/o/r/pull/7");
+assert.equal(parseState(log).pr, "https://github.com/o/r/pull/7");
+assert.equal(parseState("---\npr: none\n---\n\n## Log\n\n- 2026-11-10T14:00 planning\n").pr, null);
 assert.equal(parseState("no frontmatter at all").last, null);
 
 // Title and link. sc-16306 has no title or url field: its log names the story with a slug and a fragment.

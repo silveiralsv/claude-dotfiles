@@ -46,6 +46,8 @@ export function parseState(text, ticket) {
   }
   state.ticket ||= ticket;
   Object.assign(state, link(state, text));
+  // Frontmatter `pr:` wins; Leads from before that field, or that left `pr: none`, have the URL only in the log.
+  state.pr = prUrl(state.pr) ?? prUrl(text);
   const sections = {};
   let bullets = null;
   for (const l of lines.slice(body)) {
@@ -72,7 +74,8 @@ export function mdPath(text, dir, home) {
   return f.startsWith("~/") ? home + f.slice(1) : f.startsWith("/") ? f : `${dir}/${f}`;
 }
 
-export const prUrl = (text) => /https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/.exec(text ?? "")?.[0] ?? null;
+// The last pull request URL in the text.
+export const prUrl = (text) => (text ?? "").match(/https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/g)?.at(-1) ?? null;
 
 export const STEPS = ["Plano", "Implementa", "Verifica", "PR", "Fim"];
 // status: [current step, its label when not the step name]

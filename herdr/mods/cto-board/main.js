@@ -2,11 +2,11 @@
 // Props: { space } shows the board; { file } shows that markdown file (the plan view).
 // Read-only: it never writes a state file and never sends anything to a Lead.
 
-import { View, div } from "gpui-kit";
+import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView } from "gpui-base";
 import * as fs from "fs/promises";
 import { spaces, terminals, props, theme, settings, run, hc, home, readTextFile, watchFolder, openOverlay, closeOverlay, notify, playSound } from "herdr";
-import { parseState, mdPath, prUrl, steps, ago, hhmm } from "./parse.js";
+import { parseState, mdPath, steps, ago, hhmm } from "./parse.js";
 
 const ASK = { plan_ready: "plano pronto", blocked: "bloqueado" };
 const WAIT = { plan_ready: "esperando a sua aprovação do plano", blocked: "esperando a sua resposta" }; // "agora" without a live message
@@ -20,10 +20,12 @@ const openFile = (file) => openOverlay({ mod: "cto-board", props: { file }, kind
 const chip = (text, color) =>
   div().flex_none().px(6).h(18).flex().items_center().rounded(5).bg(color + "26").text_size(10.5).font_semibold().text_color(color).child(text);
 
-// The ticket id; with a URL, a link that opens the ticket and not the card under it.
-const ticketChip = (t, s, id) => !s.url ? chip(s.ticket, t.muted).font_family(mono())
-  : chip(`${s.ticket} ↗`, t.accent).font_family(mono()).id(id).cursor_pointer().hover((st) => st.bg(t.accent + "40"))
-    .on_click((_e, cx) => { cx.stop_propagation(); cx.open_url(s.url); });
+// A chip that opens `url`, and not the card under it.
+const linkChip = (text, url, color, id) => chip(`${text} ↗`, color).font_family(mono()).id(id).cursor_pointer()
+  .hover((st) => st.bg(color + "40")).on_click((_e, cx) => { cx.stop_propagation(); cx.open_url(url); });
+
+// The ticket id; with a URL, a link to the ticket.
+const ticketChip = (t, s, id) => s.url ? linkChip(s.ticket, s.url, t.accent, id) : chip(s.ticket, t.muted).font_family(mono());
 
 const title = (text) => div().min_w(0).truncate().text_size(13.5).font_bold().child(text);
 
@@ -222,7 +224,6 @@ export default class CtoBoard extends View {
   leadCard(t, { s, lead }, now) {
     const path = steps(s.status);
     const word = path[0].state === "off" ? s.status ?? "?" : null; // blocked, failed or a status off the path
-    const pr = prUrl(s.last?.text);
     const right = [lead ? lead.status : "sem tab", ago(s.updatedAt, now)].filter(Boolean).join(" · ");
     const busy = lead?.status === "working";
     // An idle Lead's last message is stale; the waiting text says more.
@@ -231,13 +232,16 @@ export default class CtoBoard extends View {
       .when(Boolean(lead), (el) => el.cursor_pointer().hover((st) => st.bg(t.hover)).on_click(() => run("agent.focus", { terminal: lead.address })))
       .when(!lead, (el) => el.opacity(0.55))
       .child(h_flex().gap(6).items_center()
-        .child(div().size(8).flex_none().rounded(4).bg(lead ? t[lead.status] ?? t.idle : t.dim))
+        // The same native spinner as Herdr's agent list; render never runs for it.
+        .child(busy ? svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)
+          : div().size(8).flex_none().rounded(4).bg(lead ? t[lead.status] ?? t.idle : t.dim))
         .child(s.title ? title(s.title).flex_1() : div().flex_1().min_w(0).truncate().font_family(mono()).font_bold().child(s.ticket))
         .when(Boolean(word), (el) => el.child(div().flex_none().text_size(11).font_semibold()
           .text_color(s.status === "blocked" ? t.blocked : s.status === "failed" ? t.ansi1 : t.muted).child(word)))
-        .child(div().flex_none().text_size(11).text_color(t.dim).child(right)))
+        .child(div().flex_none().text_size(11).text_color(busy ? t.working : t.dim).child(right)))
       .child(h_flex().gap(6).items_center().text_size(11.5)
         .child(ticketChip(t, s, `tk-lead-${s.key}`))
+        .when(Boolean(s.pr), (el) => el.child(linkChip(`PR #${s.pr?.split("/").pop()}`, s.pr, t.ansi2, `pr-${s.key}`)))
         .when(Boolean(s.source), (el) => el.child(div().flex_none().text_color(t.dim).child(s.source)))
         .when(Boolean(s.type), (el) => el.child(chip(s.type, t.muted)))
         .child(div().flex_1().min_w(0).truncate().text_color(t.dim).child(lead?.name ?? s.lead ?? "")))
@@ -247,10 +251,7 @@ export default class CtoBoard extends View {
       .child(h_flex().gap(3).children(path.map((x) => step(t, x, s.status === "plan_ready"))))
       .child(h_flex().gap(8).items_center().text_size(11.5)
         .child(div().flex_1().min_w(0).truncate().text_color(t.muted).child(s.last ? `${hhmm(s.last.at)} ${s.last.text}`.trim() : ""))
-        .child(pr
-          ? div().id(`pr-${s.key}`).flex_none().text_color(t.accent).cursor_pointer().hover((st) => st.text_color(t.foreground))
-            .on_click((_e, cx) => { cx.stop_propagation(); cx.open_url(pr); }).child("abrir PR")
-          : div().flex_none().text_color(t.dim).child(count(s.files, "arquivo", "arquivos"))));
+        .child(div().flex_none().text_color(t.dim).child(count(s.files, "arquivo", "arquivos"))));
   }
 
   planView(t, p) {

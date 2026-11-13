@@ -7,8 +7,8 @@ description: Run one long-lived CTO session per Herdr space. The CTO takes ticke
 
 Coordinate the tickets of one Herdr space. Each ticket gets a Lead: a Claude
 session in its own Herdr tab that runs `/orchestrated-development`. The Lead
-calls the workers (`opus-xhigh-implementer`, `opus-xhigh-evidence-verifier`,
-`sonnet-pr-writer`) as subagents.
+calls the workers (`opus-xhigh-tdd-expert`, `opus-xhigh-implementer`,
+`opus-xhigh-evidence-verifier`, `sonnet-pr-writer`) as subagents.
 
 ## Role
 
@@ -184,10 +184,10 @@ updated: 2026-11-10T14:05:00-03:00
 - 2026-11-10T14:05 queued by the CTO
 ```
 
-`status` is one of `queued`, `planning`, `plan_ready`, `implementing`,
-`verifying`, `publishing`, `pr_open`, `done`, `blocked`, `failed`,
-`cancelled`. `updated` is an ISO 8601 time. For a `plan-only` ticket, set
-`worktree: none`. Without a ticket link, set `url: none`. The Lead sets `pr`
+`status` is one of `queued`, `planning`, `plan_ready`, `testing`,
+`implementing`, `verifying`, `publishing`, `pr_open`, `done`, `blocked`,
+`failed`, `cancelled`. `updated` is an ISO 8601 time. For a `plan-only`
+ticket, set `worktree: none`. Without a ticket link, set `url: none`. The Lead sets `pr`
 to the pull request URL when it opens one. The `cto-board`
 pane shows the title and links the ticket id to `url`.
 

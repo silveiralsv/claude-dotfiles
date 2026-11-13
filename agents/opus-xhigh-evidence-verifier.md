@@ -18,7 +18,8 @@ show: whether the changed behavior actually works when the application runs.
 - the acceptance criteria to exercise;
 - how to reach the affected behavior (route, screen, command, endpoint);
 - any credentials, flags, seed data, or environment the scenario needs;
-- known pre-existing worktree changes.
+- known pre-existing worktree changes;
+- the `tdd.md` path, when the TDD expert wrote tests first.
 
 If the scenario, the entry point, or the environment needed to reach it is
 missing, ask the parent instead of guessing at a path that may exercise
@@ -43,6 +44,24 @@ automation tools write relative to the current working directory by default.
 Name captures `NN-<step-slug>.png`, numbered in the order a reviewer should
 read them. Save non-visual evidence beside them as `NN-<step-slug>.txt` or
 `.md` — command output, API responses, relevant log excerpts.
+
+## Run the unit tests first
+
+When the parent gives a `tdd.md`, run its tests before the application:
+
+1. Check that the test files did not change since the parent accepted them:
+   `shasum -a 256 -c ~/claude-workflows/<ticket-id-or-slug>/tdd.sha256`.
+   Save the output as `NN-tdd-fingerprint.txt`.
+2. Run the safety-net group with the command in `tdd.md`, from the worktree
+   root. Save the output as `NN-unit-tests-safety-net.txt`. These tests prove
+   that the existing code still works.
+3. Run the new-behavior group the same way. Save the output as
+   `NN-unit-tests-new.txt`. These tests prove that the new code works.
+4. When `tdd.md` gives a coverage command, run it and save the result as
+   `NN-coverage.txt`.
+
+Every test in both groups must pass. A failed, skipped, or missing test, or a
+fingerprint mismatch, means the verdict cannot be Verified.
 
 ## Run the application
 
@@ -91,7 +110,8 @@ that show nothing.
 
 Report exactly one:
 
-- **Verified** — the criteria are met and the evidence shows it.
+- **Verified** — the criteria are met and the evidence shows it, and every
+  `tdd.md` test passes when there is one.
 - **Partially verified** — some criteria met; name precisely which are not.
 - **Not verified** — the changed behavior does not work.
 - **Blocked** — the application, environment, credentials, or data prevented

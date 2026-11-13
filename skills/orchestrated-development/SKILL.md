@@ -1,6 +1,6 @@
 ---
 name: orchestrated-development
-description: Orchestrate non-trivial repository development through parent-led investigation and planning, implementation by the opus-xhigh-implementer subagent, parent review, runtime verification with screenshot evidence by the opus-xhigh-evidence-verifier subagent, parent acceptance, and pull-request publication by the sonnet-pr-writer subagent. The primary model acts as architect, reviewer and approver; three subagent workers do the implementation, verification and publication work. Use for features, substantial fixes, maintenance, refactors, and tests — trigger on "orchestrated development", "delega a implementação", "roda com os subagentes sonnet", "implementa com o workflow orquestrado". Do not use for read-only analysis, diagnosis without requested fixes, or tiny mechanical changes.
+description: Orchestrate non-trivial repository development through parent-led investigation and planning, failing tests first by the opus-xhigh-tdd-expert subagent, implementation by the opus-xhigh-implementer subagent, parent review, runtime verification with screenshot evidence by the opus-xhigh-evidence-verifier subagent, parent acceptance, and pull-request publication by the sonnet-pr-writer subagent. The primary model acts as architect, reviewer and approver; four subagent workers do the test-first, implementation, verification and publication work. Use for features, substantial fixes, maintenance, refactors, and tests — trigger on "orchestrated development", "delega a implementação", "roda com os subagentes sonnet", "implementa com o workflow orquestrado". Do not use for read-only analysis, diagnosis without requested fixes, or tiny mechanical changes.
 ---
 
 # Orchestrated Development
@@ -32,6 +32,10 @@ planning, risk analysis, review of the actual diff, and final acceptance.
 
 Custom agents are:
 
+- `opus-xhigh-tdd-expert` (latest Opus, effort xhigh): writes the unit tests
+  before the implementation. It protects the existing code that the plan
+  changes with tests that pass, and writes tests for the new behavior that
+  fail until the implementer is done. Writes only test files, never source.
 - `opus-xhigh-implementer` (latest Opus, effort xhigh): the only write-heavy
   implementation and fix worker.
 - `opus-xhigh-evidence-verifier` (latest Opus, effort xhigh): the only agent that runs
@@ -102,33 +106,88 @@ Before delegation, produce a concrete plan containing what is relevant:
 - API, state, data, protocol, or interface changes;
 - architectural and compatibility constraints;
 - edge cases and failure handling;
-- expected tests and validation commands;
+- tests: the existing code that needs a safety net, and the new behavior
+  to test first (step 4);
+- validation commands;
 - known pre-existing worktree changes;
 - explicit exclusions.
 
 The primary agent owns all architectural decisions. Give the worker enough
 context to implement without repeating broad investigation.
 
-### 4. Delegate implementation
+### 4. Write the tests first
+
+Before any production code changes, spawn the custom agent named exactly
+`opus-xhigh-tdd-expert` via the Agent tool
+(`subagent_type: "opus-xhigh-tdd-expert"`, no model override). Provide the
+task or ticket identifier, the approved plan, the acceptance criteria, the
+existing code the plan changes, the new or changed behavior, the current
+behavior the plan changes on purpose, and the baseline worktree state.
+
+The worker writes only tests, in two phases:
+
+1. Safety net: unit tests for the current behavior of the existing code that
+   the plan changes and keeps. They must pass against the current code.
+2. New behavior: unit tests for each acceptance criterion and each new or
+   changed behavior. They must fail now, because the behavior does not exist
+   yet.
+
+It writes the commands and both test lists to
+`~/claude-workflows/<ticket-id-or-slug>/tdd.md`.
+
+Review the tests as the contract for the implementation. Check that they
+cover the plan and its edge cases, test behavior and not internals, and fail
+for the right reason. Send corrections to the same agent via SendMessage. If
+a safety-net test finds a bug in the current code, decide whether the plan
+changes; ask the user when the scope changes.
+
+When you accept the tests, record their fingerprint from the `## Test files`
+list in `tdd.md`:
+
+```sh
+shasum -a 256 <test files> > ~/claude-workflows/<ticket-id-or-slug>/tdd.sha256
+```
+
+Record it again after every correction you approve later.
+
+Skip this step only when the change has no unit-testable code (documentation,
+configuration, pure styling) or the affected code has no unit test runner.
+Say so explicitly, with the reason.
+
+### 5. Delegate implementation
 
 Spawn the custom agent named exactly `opus-xhigh-implementer` via the Agent
 tool (`subagent_type: "opus-xhigh-implementer"`). Provide the task or ticket
 identifier, approved plan, acceptance criteria, relevant architectural
-context, baseline worktree state, excluded scope, and validation expectations.
+context, baseline worktree state, excluded scope, validation expectations,
+and the `tdd.md` path from step 4.
+
+The implementer makes the new tests pass and keeps the safety net passing. It
+never edits, skips, or deletes those tests. If a test looks wrong, it stops
+and escalates; you decide, and a test correction goes to the TDD expert.
 
 Do NOT pass a `model` override on the Agent call — the agent definition owns
 its model and reasoning effort. Only one write-heavy agent may work on the
-task at a time. Do not spawn competing implementers or parallel writers.
+task at a time: the TDD expert finishes before the implementer starts. Do not
+spawn competing implementers or parallel writers.
 
 Note the returned agent id: corrections go back to the SAME agent via
 SendMessage, which preserves its context. Wait for implementation and
 validation to finish before reviewing.
 
-### 5. Review the actual diff
+### 6. Review the actual diff
 
 The primary agent must inspect Git status and the complete resulting diff
 against the recorded baseline (`git diff`, `git status`). Never accept
 implementation solely from the worker summary or because tests pass.
+
+When step 4 ran, check that the TDD tests did not change:
+
+```sh
+shasum -a 256 -c ~/claude-workflows/<ticket-id-or-slug>/tdd.sha256
+```
+
+A changed test file is a finding, unless you approved the change.
 
 Review correctness, requirements coverage, architecture, ownership,
 unnecessary complexity, regressions, assumptions, edge cases, failure
@@ -140,10 +199,10 @@ Use Ponytail guidance when available to identify code that can be deleted,
 reused, or replaced by existing or native functionality. Its absence must not
 block the workflow.
 
-### 6. Correct substantive findings
+### 7. Correct substantive findings
 
 Send precise corrective instructions to the same `opus-xhigh-implementer`
-agent via SendMessage (using the agent id from step 4). Include the affected
+agent via SendMessage (using the agent id from step 5). Include the affected
 behavior or location, why it is incorrect, the expected correction, and
 validation that must be rerun.
 
@@ -153,7 +212,7 @@ preferences handled by formatters or linters.
 The primary agent may directly fix a tiny mechanical issue when clearly more
 efficient. Architecture-sensitive corrections return to the implementer.
 
-### 7. Verify the running application and capture evidence
+### 8. Verify the tests and the running application
 
 Once the diff is correct, spawn the custom agent named exactly
 `opus-xhigh-evidence-verifier` via the Agent tool
@@ -166,14 +225,19 @@ files, the acceptance criteria to exercise, how to reach the affected behavior
 seed data the scenario needs. Reaching the changed behavior is the point;
 without a concrete entry point the worker verifies nothing.
 
+When step 4 ran, also give the `tdd.md` path. The verifier first runs both
+test groups and saves their output as evidence. Every safety-net test and
+every new test must pass, and the test files must match `tdd.sha256`. Then it
+exercises the running application.
+
 Evidence is written to `~/claude-workflows/<ticket-id-or-slug>/evidences`,
 outside every repository so it can never be swept into the pull request.
 
 Skip this step only when the change has no runnable surface at all — pure
-documentation, comments, or configuration that nothing executes. Say so
-explicitly; never skip it silently to save time.
+documentation, comments, or configuration that nothing executes — and step 4
+wrote no tests. Say so explicitly; never skip it silently to save time.
 
-A verdict other than Verified returns to step 6: send the evidence and the
+A verdict other than Verified returns to step 7: send the evidence and the
 precise failure to the same `opus-xhigh-implementer` agent. After the fix,
 re-verify by spawning `opus-xhigh-evidence-verifier` again — never by checking it
 yourself because the remaining doubt is small.
@@ -208,7 +272,7 @@ scenario instead of capturing the missing shot yourself.
 The only permitted exception is an explicit user instruction to skip
 delegation. Announce it when it happens.
 
-### 8. Perform final acceptance
+### 9. Perform final acceptance
 
 Confirm requirements and acceptance criteria, architectural consistency,
 scope, tests, highest-signal checks, and error handling. Confirm applicable
@@ -217,13 +281,13 @@ and performance concerns are resolved.
 
 Run lint, type checks, builds, schema validation, and the test suite when
 relevant — these are static or headless checks the primary agent owns. Any
-check that requires the application to be running belongs to step 7 and its
+check that requires the application to be running belongs to step 8 and its
 worker, never to the parent.
 
 Update repository planning state and acceptance evidence only when the task is
 genuinely complete.
 
-### 9. Publish the pull request
+### 10. Publish the pull request
 
 After final acceptance, spawn the custom agent named exactly
 `sonnet-pr-writer` via the Agent tool (`subagent_type: "sonnet-pr-writer"`,
@@ -265,8 +329,9 @@ with these rules:
    it.
 2. Own the state file, and keep its `title` and `url`. Update `status` and
    `updated` at every phase change:
-   `planning` (steps 1–3), `plan_ready`, `implementing` (steps 4–6),
-   `verifying` (steps 7–8), `publishing` (step 9), `pr_open`, `done`, and
+   `planning` (steps 1–3), `plan_ready`, `testing` (step 4),
+   `implementing` (steps 5–7), `verifying` (steps 8–9), `publishing`
+   (step 10), `pr_open`, `done`, and
    `blocked` or `failed` when you report them. Record decisions in
    `## Decisions` and every file you change in `## Files touched`. The CTO
    uses that list to find conflicts between tickets. At every status change
@@ -277,7 +342,7 @@ with these rules:
 3. Plan gate. After step 3, write the plan to
    `~/claude-workflows/<TICKET>/plan.md`, in the `/ste-explain` style when
    that skill is available. Set `plan_ready`, send `PLAN_READY`, and stop.
-   Do not delegate implementation before an `APPROVED` message. On
+   Do not start step 4 before an `APPROVED` message. On
    `CHANGES: <text>`, revise the plan and send `PLAN_READY` again. For a
    plan-only ticket, `APPROVED` ends the work: set `done` and send `DONE`.
 4. Report to the CTO with one line:
@@ -309,7 +374,7 @@ with these rules:
    - `MERGED`: do the repository's post-merge steps (for example move the
      ticket), stop the watch, set `done`, and send `DONE <url>`.
    - `CLOSED` without a merge: send `BLOCKED` with a file that says so.
-   - Failed checks or requested changes: fix them through steps 4–9 when the
+   - Failed checks or requested changes: fix them through steps 4–10 when the
      cause is clear. Otherwise send `BLOCKED` with the details.
 
    Never send `DONE` while the pull request is open, even when the checks
@@ -319,7 +384,7 @@ with these rules:
 8. If a message says the CTO address changed, report to the new address from
    then on.
 9. If the brief says `Resume: watch <url>`, the work is already done and only
-   the pull request remains. Set `pr_open`, skip steps 1–9 and the plan gate,
+   the pull request remains. Set `pr_open`, skip steps 1–10 and the plan gate,
    and go to rule 7.
 
 ## Parent-owned decisions
@@ -353,8 +418,8 @@ Whenever work is delegated:
 
 - Use the configured custom agent by its exact name.
 - Make delegation visible through normal subagent activity.
-- Do not silently perform delegated implementation, verification, or
-  publication work in the parent.
+- Do not silently perform delegated test writing, implementation,
+  verification, or publication work in the parent.
 - Identify which agent performed the work after it returns.
 - Inspect the actual diff rather than trusting its summary.
 - Never report a change as verified without a `opus-xhigh-evidence-verifier` run

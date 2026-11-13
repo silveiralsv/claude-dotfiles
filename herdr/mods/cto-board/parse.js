@@ -77,9 +77,9 @@ export function mdPath(text, dir, home) {
 // The last pull request URL in the text.
 export const prUrl = (text) => (text ?? "").match(/https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/g)?.at(-1) ?? null;
 
-export const STEPS = ["Plano", "Implementa", "Verifica", "PR", "Fim"];
+export const STEPS = ["Plano", "Testes", "Implementa", "Verifica", "PR", "Fim"];
 // status: [current step, its label when not the step name]
-const STAGE = { planning: [0], plan_ready: [0, "Plano pronto"], implementing: [1], verifying: [2], publishing: [3], pr_open: [3, "PR aberto"], done: [4] };
+const STAGE = { planning: [0], plan_ready: [0, "Plano pronto"], testing: [1], implementing: [2], verifying: [3], publishing: [4], pr_open: [4, "PR aberto"], done: [5] };
 
 // Each step as { name, state: "done" | "current" | "todo" | "off" }; "off" for statuses off the path.
 export function steps(status) {

@@ -244,15 +244,24 @@ pane shows the title and links the ticket id to `url`.
    A `plan-only` ticket gets no worktree.
 
 4. Start the Lead from this terminal, so its parent is the CTO. Its cwd is
-   the worktree. For a `plan-only` ticket, use `--cwd ~/www/<repo>`:
+   the worktree. For a `plan-only` ticket, use `--cwd ~/www/<repo>`.
+
+   The Lead must use the same Claude config as the CTO. Each repo has its
+   own config (a `claude-*` shell function sets `CLAUDE_CONFIG_DIR`), and
+   `hc run` does not inherit this session's environment. So pass the CTO's
+   `CLAUDE_CONFIG_DIR` through, or unset it when the CTO has none:
 
    ```sh
    SPACE=$(hc get "$HC_TERMINAL_ID" --json | jq -r '.labels["herdr.space"]')
    hc run --bg --outlive-parent --json --name lead-<slug> \
      --label herdr.space="$SPACE" --label role=lead --label ticket=<TICKET> \
      --cwd ~/www/<repo>-<slug> \
+     env -u CLAUDE_CONFIG_DIR ${CLAUDE_CONFIG_DIR:+CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR"} \
      claude --dangerously-skip-permissions "$(cat ~/claude-workflows/<TICKET>/brief.md)"
    ```
+
+   After the spawn, `hc read lead-<slug>` must show the same account in the
+   Lead's status line as in yours.
 
 5. Check `first_message.sent` in the launch JSON. If it is false, run
    `hc read lead-<slug>` before you send anything. Never resend blindly.

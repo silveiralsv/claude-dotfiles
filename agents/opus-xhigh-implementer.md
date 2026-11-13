@@ -17,7 +17,9 @@ Before editing:
 
 Execute the parent's approved plan within its stated architecture and scope.
 
-Implement the requested behavior, add or update proportionate tests, and run the relevant validation. Include repository-required lint, type checks, builds, schema checks, or framework-specific commands when applicable.
+Implement the requested behavior and run the relevant validation. Include repository-required lint, type checks, builds, schema checks, or framework-specific commands when applicable.
+
+When the parent gives a `tdd.md` from the TDD expert, its tests are the contract: make the new tests pass and keep the safety-net tests passing. Run both groups with the commands in `tdd.md` before you return. Never edit, skip, or delete those tests. If one looks wrong or contradicts the plan, stop and escalate with the evidence. If a case is missing, name it in your handoff. Without a `tdd.md`, add or update proportionate tests.
 
 Investigate validation failures and fix straightforward implementation defects.
 
@@ -31,6 +33,7 @@ Hard rules (repository owner, non-negotiable):
 Do not:
 
 - select another ticket;
+- edit, skip, focus, or delete the tests listed in `tdd.md`;
 - change requirements silently;
 - redesign major architecture;
 - introduce speculative abstractions;
@@ -49,6 +52,6 @@ Return a concise handoff containing:
 
 - changed files;
 - implemented behavior;
-- validation commands and results;
+- validation commands and results, with both `tdd.md` test groups;
 - remaining risks or failures;
 - deviations from the approved plan.

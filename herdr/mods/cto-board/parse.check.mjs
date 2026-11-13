@@ -130,13 +130,14 @@ assert.deepEqual([gh.title, gh.source], ["Fix the build", "github.com"]);
 
 // Stage mapping.
 const names = (status) => steps(status).map((x) => `${x.state}:${x.name}`).join(" ");
-assert.equal(names("planning"), "current:Plano todo:Implementa todo:Verifica todo:PR todo:Fim");
-assert.equal(names("plan_ready"), "current:Plano pronto todo:Implementa todo:Verifica todo:PR todo:Fim");
-assert.equal(names("implementing"), "done:✓ Plano current:Implementa todo:Verifica todo:PR todo:Fim");
-assert.equal(names("verifying"), "done:✓ Plano done:✓ Implementa current:Verifica todo:PR todo:Fim");
-assert.equal(names("publishing"), "done:✓ Plano done:✓ Implementa done:✓ Verifica current:PR todo:Fim");
-assert.equal(names("pr_open"), "done:✓ Plano done:✓ Implementa done:✓ Verifica current:PR aberto todo:Fim");
-assert.equal(names("done"), "done:✓ Plano done:✓ Implementa done:✓ Verifica done:✓ PR current:Fim");
+assert.equal(names("planning"), "current:Plano todo:Testes todo:Implementa todo:Verifica todo:PR todo:Fim");
+assert.equal(names("plan_ready"), "current:Plano pronto todo:Testes todo:Implementa todo:Verifica todo:PR todo:Fim");
+assert.equal(names("testing"), "done:✓ Plano current:Testes todo:Implementa todo:Verifica todo:PR todo:Fim");
+assert.equal(names("implementing"), "done:✓ Plano done:✓ Testes current:Implementa todo:Verifica todo:PR todo:Fim");
+assert.equal(names("verifying"), "done:✓ Plano done:✓ Testes done:✓ Implementa current:Verifica todo:PR todo:Fim");
+assert.equal(names("publishing"), "done:✓ Plano done:✓ Testes done:✓ Implementa done:✓ Verifica current:PR todo:Fim");
+assert.equal(names("pr_open"), "done:✓ Plano done:✓ Testes done:✓ Implementa done:✓ Verifica current:PR aberto todo:Fim");
+assert.equal(names("done"), "done:✓ Plano done:✓ Testes done:✓ Implementa done:✓ Verifica done:✓ PR current:Fim");
 for (const s of ["blocked", "failed", "queued", undefined]) assert.ok(steps(s).every((x) => x.state === "off"), String(s));
 
 // Relative time and clock.

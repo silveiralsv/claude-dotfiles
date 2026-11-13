@@ -292,8 +292,14 @@ block in a wait loop: the user cannot reach you while you wait. Run
 
 A report is one line: `<TICKET> <STATE> <path-or-url>`.
 
-- `PLAN_READY <plan.md>`: read the plan (it is short) and present it to the
-  user. Relay the answer with `hc send <lead> "APPROVED"` or
+- `PLAN_READY <plan.md>`: read the summary at the top of the plan (the
+  sections before `## Technical plan`) and show it to the user in the
+  user's language, with the same headings in the same order: the problem,
+  what the ticket asks, what we will do, decisions for you, and how we know
+  it works. Then give the `plan.md` path. Do not show the technical plan
+  unless the user asks. When a plan has no summary (an older Lead), write
+  the problem and the ticket's request in one line each from the plan, and
+  then the decisions. Relay the answer with `hc send <lead> "APPROVED"` or
   `hc send <lead> "CHANGES: <user's words>"`. For a `plan-only` ticket,
   `APPROVED` ends the work, and the Lead then sends `DONE`.
 - `BLOCKED <path>`: show the question to the user. Relay the answer with

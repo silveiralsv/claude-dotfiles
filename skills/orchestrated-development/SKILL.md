@@ -112,6 +112,25 @@ Before delegation, produce a concrete plan containing what is relevant:
 - known pre-existing worktree changes;
 - explicit exclusions.
 
+When the plan goes to the user (for a Lead, always), start it with a
+summary for the user, at most 20 lines, before the technical plan. The user
+must see the problem and the ticket's request before any code detail. Use
+these headings, in this order:
+
+1. `## The problem`: two to four sentences. What is wrong or missing today,
+   for whom, and the effect. Use product words, not code.
+2. `## What the ticket asks`: who opened the ticket, and what that person
+   asks for or proposes, close to their words, as bullets. When the ticket
+   proposes no solution, say so.
+3. `## What we will do`: two to five bullets. Then one line that compares
+   them with the ticket: "Same as the ticket", or each difference and why.
+4. `## Decisions for you`: only the choices that the user must make, each
+   with your recommendation. Write "None" when there are none. Choices you
+   make alone go in the technical plan.
+5. `## How we know it works`: the acceptance criteria, two to four bullets.
+
+Then add `## Technical plan` with the items above.
+
 The primary agent owns all architectural decisions. Give the worker enough
 context to implement without repeating broad investigation.
 
@@ -340,8 +359,9 @@ with these rules:
    `- 2026-11-10T14:05:00-03:00 plan_ready: plan.md`. The CTO board shows
    these lines.
 3. Plan gate. After step 3, write the plan to
-   `~/claude-workflows/<TICKET>/plan.md`, in the `/ste-explain` style when
-   that skill is available. Set `plan_ready`, send `PLAN_READY`, and stop.
+   `~/claude-workflows/<TICKET>/plan.md`, with the summary for the user
+   first (step 3), in the `/ste-explain` style when that skill is
+   available. Set `plan_ready`, send `PLAN_READY`, and stop.
    Do not start step 4 before an `APPROVED` message. On
    `CHANGES: <text>`, revise the plan and send `PLAN_READY` again. For a
    plan-only ticket, `APPROVED` ends the work: set `done` and send `DONE`.

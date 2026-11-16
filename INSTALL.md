@@ -55,6 +55,9 @@ directories so existing user content remains available.
 <CLAUDE_HOME>/skills/cto
   -> <checkout>/skills/cto
 
+<CLAUDE_HOME>/skills/auto-intake
+  -> <checkout>/skills/auto-intake
+
 <CLAUDE_HOME>/skills/ste-explain
   -> <checkout>/skills/ste-explain
 
@@ -140,8 +143,8 @@ After installation:
 2. Parse all four subagent Markdown frontmatter blocks or otherwise confirm
    they are readable and declare a model: `opus` for the TDD expert, the
    implementer, and the verifier, `sonnet` for the pull-request writer.
-3. Confirm the `orchestrated-development`, `cto`, and `ste-explain` skills
-   each contain a readable `SKILL.md`.
+3. Confirm the `orchestrated-development`, `cto`, `auto-intake`, and
+   `ste-explain` skills each contain a readable `SKILL.md`.
 4. Confirm Ponytail and the Caveman skills are discoverable when installed.
 5. When the `cto-board` link exists and `herdr-app` is on `PATH` or at
    `~/.local/bin/herdr-app`, run `herdr-app check <HERDR_HOME>/mods/cto-board`

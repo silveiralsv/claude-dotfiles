@@ -406,6 +406,29 @@ with these rules:
 9. If the brief says `Resume: watch <url>`, the work is already done and only
    the pull request remains. Set `pr_open`, skip steps 1–10 and the plan gate,
    and go to rule 7.
+10. If the brief says `Auto-intake: on`, the CTO may approve the plan without
+    the user. Add `## Auto-intake gates` to the plan, after
+    `## How we know it works` and before `## Technical plan`, with one line
+    for each gate: `yes`, `no`, or `n/a`, and the evidence. When in doubt,
+    write `no`.
+    - `2 reproduces:` bugs only; features write `n/a`. In step 2, spawn the
+      evidence verifier to reproduce the bug on staging or localhost twice,
+      with the state reset between the two tries, through the path a user
+      takes (UI or API). Reading data may confirm the bug; it must never
+      create or force it.
+    - `3 small impact:` the one fact that makes the change safe, and how
+      you proved it by running code (a test, a query, a run). An argument
+      alone is `no`.
+    - `5 no decisions:` `yes` only when `## Decisions for you` says None.
+      Settle a choice yourself when a test or a prototype can answer it.
+      Product and preference choices stay with the user.
+
+    If the brief says `Auto-intake: verify <url>`, a fix already exists.
+    Skip the plan gate and do not change code. Spawn the evidence verifier
+    to run the bug without the fix and with it, twice each. Write its
+    verdict (confirmed, insufficient, or inconclusive) to
+    `~/claude-workflows/<TICKET>/verify.md`. Never open a pull request. Set
+    `done` and send `DONE <verify.md>`.
 
 ## Parent-owned decisions
 

@@ -28,6 +28,8 @@ To run several tickets at once, start `/cto` in a Herdr tab. The work has three 
 
 You approve twice per ticket: the plan and the pull request. See [`cto`](./skills/cto/SKILL.md).
 
+Optional: in a CTO session, [`auto-intake`](./skills/auto-intake/SKILL.md) runs tickets without you at the plan gate. `/auto-intake <TICKET> ...` takes the tickets you pick; `/auto-intake --watch <source>` picks the TODO tickets assigned to you. Each ticket passes a set of gates (still yours, no existing fix, clear goal, reproduces, small impact, trusted area, no decisions for you) and a 10-minute veto window. Any no sends the plan to you as usual. You still approve every pull request.
+
 The optional [`cto-board`](./herdr/mods/cto-board/main.js) Herdr mod opens beside the CTO chat and shows the same board live: what needs you, each Lead's stage, the queue, and recent activity from the state files. It is read-only.
 
 ## Contents
@@ -39,6 +41,8 @@ agents/
   opus-xhigh-evidence-verifier.md
   sonnet-pr-writer.md
 skills/
+  auto-intake/
+    SKILL.md
   cto/
     SKILL.md
   orchestrated-development/
@@ -55,6 +59,7 @@ INSTALL.md
 
 - [`orchestrated-development`](./skills/orchestrated-development/SKILL.md) defines investigation, tests first, implementation, review, verification, and publication.
 - [`cto`](./skills/cto/SKILL.md) coordinates one Lead per ticket in a Herdr space.
+- [`auto-intake`](./skills/auto-intake/SKILL.md) lets the CTO approve plans itself for tickets that pass its gates.
 - [`ste-explain`](./skills/ste-explain/SKILL.md) writes explanations and plans in ASD-STE100 Simplified Technical English.
 - [`opus-xhigh-tdd-expert`](./agents/opus-xhigh-tdd-expert.md) writes the unit tests before the implementation, and only tests (latest Opus, effort xhigh).
 - [`opus-xhigh-implementer`](./agents/opus-xhigh-implementer.md) is the only write-heavy implementation worker (latest Opus, effort xhigh).
@@ -81,6 +86,7 @@ The installer creates links only for files owned by this repository:
 ```text
 ~/.claude/skills/orchestrated-development
 ~/.claude/skills/cto
+~/.claude/skills/auto-intake
 ~/.claude/skills/ste-explain
 ~/.claude/agents/opus-xhigh-tdd-expert.md
 ~/.claude/agents/opus-xhigh-implementer.md

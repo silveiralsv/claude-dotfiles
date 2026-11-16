@@ -26,7 +26,7 @@ To run several tickets at once, start `/cto` in a Herdr tab. The work has three 
 2. **Lead**: one session per ticket, in its own tab. It runs `orchestrated-development` and owns the ticket from plan to pull request.
 3. **Workers**: the four subagents above. The Lead calls them; they never get a tab.
 
-You approve twice per ticket: the plan and the pull request. See [`cto`](./skills/cto/SKILL.md).
+You approve twice per ticket: the plan and the pull request. Every 30 minutes, the CTO tells you whether it needs you and for what. See [`cto`](./skills/cto/SKILL.md).
 
 Optional: in a CTO session, [`auto-intake`](./skills/auto-intake/SKILL.md) runs tickets without you at the plan gate. `/auto-intake <TICKET> ...` takes the tickets you pick; `/auto-intake --watch <source>` picks the TODO tickets assigned to you. Each ticket passes a set of gates (still yours, no existing fix, clear goal, reproduces, small impact, trusted area, no decisions for you) and a 10-minute veto window. Any no sends the plan to you as usual. You still approve every pull request.
 

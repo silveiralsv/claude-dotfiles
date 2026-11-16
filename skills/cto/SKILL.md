@@ -1,6 +1,6 @@
 ---
 name: cto
-description: Run one long-lived CTO session per Herdr space. The CTO takes tickets from the user, opens one Lead tab per ticket (each Lead runs /orchestrated-development and owns its ticket), keeps a queue and a status board, checks for conflicts between tickets, relays each plan and blocker to the user, and closes tabs when tickets finish. It never reads code deeply, reviews diffs, or runs apps. Needs herdr-core (`hc`, with `HC_TERMINAL_ID` set). Use when the user says "/cto", "start the CTO", "be the CTO of this space", "open a lead for this ticket", "status of the leads", "vira o CTO desse space", "inicia o CTO", "abre um lead para esse ticket", "status dos leads", or "quais leads estão rodando".
+description: Run one long-lived CTO session per Herdr space. The CTO takes tickets from the user, opens one Lead tab per ticket (each Lead runs /orchestrated-development and owns its ticket), keeps a queue and a status board, checks for conflicts between tickets, relays each plan and blocker to the user, tells the user every 30 minutes whether it needs them, and closes tabs when tickets finish. It never reads code deeply, reviews diffs, or runs apps. Needs herdr-core (`hc`, with `HC_TERMINAL_ID` set). Use when the user says "/cto", "start the CTO", "be the CTO of this space", "open a lead for this ticket", "status of the leads", "vira o CTO desse space", "inicia o CTO", "abre um lead para esse ticket", "status dos leads", or "quais leads estão rodando".
 ---
 
 # CTO
@@ -127,7 +127,9 @@ Run these steps on every `/cto`.
    - A "could not check" line usually means that `gh` is not logged in.
      Show it to the user before you decide on that ticket.
 
-7. Show the board and ask the user what to do.
+7. Arm the check-in. See "Check-in".
+
+8. Show the board and ask the user what to do.
 
 ## Triage
 
@@ -337,6 +339,39 @@ Show a table built from each state file's frontmatter and the live hc status:
 Show it on boot and when the user asks. After each event, give a one-line
 update. The `cto-board` pane shows the same data live; keep the table in the
 chat too.
+
+## Check-in
+
+Every 30 minutes, tell the user whether you need them, so the user does not
+have to ask.
+
+Boot arms it. With the session scheduler (for example `CronCreate`), add a
+recurring job every 30 minutes with this prompt:
+`CTO check-in: follow the "Check-in" section of the cto skill.` List the jobs
+first (for example `CronList`). When this job already exists, do not add a
+second one. If the job expires, the next `/cto` arms it again.
+
+When it fires:
+
+1. Read the open state files of this space (Boot step 6) and
+   `hc get <lead> --json` of each live Lead.
+2. Find what waits for the user:
+   - a plan, question, or choice that you showed and the user did not answer
+     yet;
+   - a Lead whose terminal is `blocked` (a permission or trust prompt);
+   - a `FAILED` ticket, or an orphan, that waits for retry or cancel;
+   - a pull request whose next step is the user's (a review, an approval, or
+     a decision), from its state file;
+   - a queued ticket that waits for a decision of the user.
+3. Reply in the user's language, and start with one of these two lines,
+   exactly:
+   - `Preciso de você:` (English: `I need you:`). Then one line for each
+     item: the ticket, what the user must do, and where (a path, a link, or
+     a tab).
+   - `Nada precisa de você agora.` (English: `Nothing needs you now.`). Then
+     one line: how many Leads are working.
+
+Keep the reply short. Do not show the board.
 
 ## Close
 

@@ -96,6 +96,14 @@ when relevant.
 
 Keep investigation focused and reuse context already established in the task.
 
+For a bug with a runnable surface, spawn `opus-xhigh-evidence-verifier` in
+`reproduce` mode before you write the plan. Give it the expected result, what
+happens instead, the trigger, the environment (staging or localhost), and how
+to reach it. It tries twice, with the state reset between the tries, through
+the path a user takes, and never forces the symptom. Put its verdict and
+evidence path in the plan. When it says anything other than Reproduced, say so
+in `## The problem`.
+
 ### 3. Approve an implementation plan
 
 Before delegation, produce a concrete plan containing what is relevant:
@@ -248,6 +256,9 @@ When step 4 ran, also give the `tdd.md` path. The verifier first runs both
 test groups and saves their output as evidence. Every safety-net test and
 every new test must pass, and the test files must match `tdd.sha256`. Then it
 exercises the running application.
+
+For a bug, also give the scenario from the step 2 reproduction. The verifier
+runs it twice on the fixed code, and the bug must show in neither try.
 
 Evidence is written to `~/claude-workflows/<ticket-id-or-slug>/evidences`,
 outside every repository so it can never be swept into the pull request.
@@ -411,11 +422,8 @@ with these rules:
     `## How we know it works` and before `## Technical plan`, with one line
     for each gate: `yes`, `no`, or `n/a`, and the evidence. When in doubt,
     write `no`.
-    - `2 reproduces:` bugs only; features write `n/a`. In step 2, spawn the
-      evidence verifier to reproduce the bug on staging or localhost twice,
-      with the state reset between the two tries, through the path a user
-      takes (UI or API). Reading data may confirm the bug; it must never
-      create or force it.
+    - `2 reproduces:` bugs only; features write `n/a`. `yes` only when the
+      step 2 reproduction says Reproduced.
     - `3 small impact:` the one fact that makes the change safe, and how
       you proved it by running code (a test, a query, a run). An argument
       alone is `no`.
@@ -425,9 +433,9 @@ with these rules:
 
     If the brief says `Auto-intake: verify <url>`, a fix already exists.
     Skip the plan gate and do not change code. Spawn the evidence verifier
-    to run the bug without the fix and with it, twice each. Write its
-    verdict (confirmed, insufficient, or inconclusive) to
-    `~/claude-workflows/<TICKET>/verify.md`. Never open a pull request. Set
+    in `reproduce` mode on the code without the fix, then in `verify` mode on
+    the code with it. Write the result (confirmed, insufficient, or
+    inconclusive) to `~/claude-workflows/<TICKET>/verify.md`. Never open a pull request. Set
     `done` and send `DONE <verify.md>`.
 
 ## Parent-owned decisions

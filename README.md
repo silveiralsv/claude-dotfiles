@@ -8,11 +8,11 @@ Personal Claude Code defaults for orchestrated software development. The primary
 
 ## Workflow
 
-1. The primary agent investigates the repository and approves a concrete plan.
+1. The primary agent investigates the repository and approves a concrete plan. For a bug, `opus-xhigh-evidence-verifier` first reproduces it twice, without forcing the symptom.
 2. `opus-xhigh-tdd-expert` writes the unit tests first: tests that pass for the existing code the plan changes, and tests that fail for the new behavior.
 3. `opus-xhigh-implementer` implements the plan until all those tests pass, without editing them.
 4. The primary agent reviews the actual diff and sends substantive fixes back to the same implementer.
-5. `opus-xhigh-evidence-verifier` runs both test groups, then runs the app locally, exercises the changed behavior, and captures screenshot and log evidence.
+5. `opus-xhigh-evidence-verifier` runs both test groups, then runs the app locally, exercises the changed behavior, and captures screenshot and log evidence. For a bug, it runs the scenario twice, and the bug must show in neither try.
 6. The primary agent performs final acceptance against that evidence.
 7. `sonnet-pr-writer` creates the branch, commit, push, and pull request.
 

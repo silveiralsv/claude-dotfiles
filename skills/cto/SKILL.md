@@ -297,6 +297,12 @@ block in a wait loop: the user cannot reach you while you wait. Run
 
 A report is one line: `<TICKET> <STATE> <path-or-url>`.
 
+When a message needs the user to act (a plan to approve, a question, a
+choice, a blocked or failed Lead), start it with the line `Preciso de você:`
+(English: `I need you:`). Then write one line for each item: the ticket, what
+the user must do, and where. Then a blank line, then the details. A
+notification hook can push the item lines to the user's phone.
+
 - `PLAN_READY <plan.md>` of a ticket whose state file has `auto: true`:
   follow the `auto-intake` skill (load it first if it is not loaded). It
   approves the plan itself or sends it to the user.

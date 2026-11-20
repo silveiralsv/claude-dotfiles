@@ -259,7 +259,10 @@ pane shows the title and links the ticket id to `url`.
    `hc run` does not inherit this session's environment. So pass the CTO's
    `CLAUDE_CONFIG_DIR` through, or unset it when the CTO has none:
 
-   Leads run at effort `high`. The workers set their own effort.
+   Leads run at effort `high`. The workers set their own effort. A Lead can
+   inherit a child-session marker that turns off transcript saving; the
+   `CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1` below keeps the transcript, so
+   the Lead can be resumed and its token use measured.
 
    ```sh
    SPACE=$(hc get "$HC_TERMINAL_ID" --json | jq -r '.labels["herdr.space"]')
@@ -267,6 +270,7 @@ pane shows the title and links the ticket id to `url`.
      --label herdr.space="$SPACE" --label role=lead --label ticket=<TICKET> \
      --cwd ~/www/<repo>-<slug> \
      env -u CLAUDE_CONFIG_DIR -u CLAUDE_EFFORT ${CLAUDE_CONFIG_DIR:+CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR"} \
+     CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1 \
      claude --dangerously-skip-permissions --effort high "$(cat ~/claude-workflows/<TICKET>/brief.md)"
    ```
 

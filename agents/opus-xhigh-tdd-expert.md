@@ -1,8 +1,8 @@
 ---
 name: opus-xhigh-tdd-expert
-description: Test-first worker for the orchestrated-development workflow (latest Opus, effort xhigh). Runs after the plan is approved and before the implementer. First it makes sure unit tests cover the existing code the plan will change, and that those tests pass. Then it writes failing unit tests for the new behavior the plan asks for. Writes only test files, never production source. Spawned by the primary agent with the approved plan.
+description: Test-first worker for the orchestrated-development workflow (latest Opus, effort high; the name is historical). Runs after the plan is approved and before the implementer. First it makes sure unit tests cover the existing code the plan will change, and that those tests pass. Then it writes failing unit tests for the new behavior the plan asks for. Writes only test files, never production source. Spawned by the primary agent with the approved plan.
 model: opus
-effort: xhigh
+effort: high
 permissionMode: bypassPermissions
 ---
 

@@ -32,7 +32,7 @@ planning, risk analysis, review of the actual diff, and final acceptance.
 
 Custom agents are:
 
-- `opus-xhigh-tdd-expert` (latest Opus, effort xhigh): writes the unit tests
+- `opus-xhigh-tdd-expert` (latest Opus, effort high): writes the unit tests
   before the implementation. It protects the existing code that the plan
   changes with tests that pass, and writes tests for the new behavior that
   fail until the implementer is done. Writes only test files, never source.
@@ -272,11 +272,22 @@ precise failure to the same `opus-xhigh-implementer` agent. After the fix,
 re-verify by spawning `opus-xhigh-evidence-verifier` again — never by checking it
 yourself because the remaining doubt is small.
 
+A re-verify runs only what the fix can change: the scenarios that failed, the
+scenarios whose code the fix changed, and one adjacent case. This applies to
+every later round, also to fixes for review comments and failed checks on the
+pull request. Give the verifier that list and the diff of the fix. The full
+scenario set of the brief (every persona, flag, and screen) runs once, in the
+first verify. Run it again only when the fix changes code that the whole set
+uses, and say why in the brief.
+
 Do not proceed to acceptance on a Partially verified, Not verified, or Blocked
 result.
 
 Inspect the evidence yourself. A worker's claim that a screenshot shows the
-expected state is not the same as the screenshot showing it.
+expected state is not the same as the screenshot showing it. Read the
+verifier's text report first, then open only the images that decide a
+criterion. Each image you open stays in your context for the rest of the
+ticket.
 
 #### The primary agent never captures evidence itself
 
@@ -392,21 +403,38 @@ with these rules:
    port that no other live process uses. Never stop a process that this Lead
    did not start.
 7. After `PR_OPEN`, stay open until the pull request is merged. Write its URL
-   to `pr:` in the state file. Follow the repository's post-PR policy when one
-   exists (for example a babysit or autopilot skill). Otherwise, watch the
-   pull request yourself: schedule a check every 15 minutes with the
-   session's scheduler (for example `CronCreate`). Arm it again when the
-   scheduler expires it. Never block in a wait loop.
+   to `pr:` in the state file.
+
+   Wait with `pr-watch.sh`, in this skill's base directory. Never arm a
+   scheduler job (`CronCreate`, `/loop`, `ScheduleWakeup`) to poll the pull
+   request: each wake re-reads your whole context. Check the pull request
+   once, act on what needs action, then start the watcher in the background
+   (Bash with `run_in_background`):
 
    ```sh
-   gh pr view <url> --json state,reviewDecision,statusCheckRollup
+   <this skill's base directory>/pr-watch.sh <url>
    ```
 
+   The watcher only reads the pull request with `gh`. It changes nothing and
+   uses no tokens while it waits. When the pull request changes, it prints
+   one line and exits, and you wake up. Act on the line, then start the
+   watcher again.
+
    - `MERGED`: do the repository's post-merge steps (for example move the
-     ticket), stop the watch, set `done`, and send `DONE <url>`.
+     ticket). Stop every process that you started, so that the CTO can
+     remove the worktree. Set `done` and send `DONE <url>`.
    - `CLOSED` without a merge: send `BLOCKED` with a file that says so.
-   - Failed checks or requested changes: fix them through steps 4–10 when the
-     cause is clear. Otherwise send `BLOCKED` with the details.
+   - `CI_FAILED <checks>`, or `REVIEW` with requested changes or comments:
+     fix the cause through the workers when it is clear (the implementer for
+     code, a re-verify of only the affected scenarios as in step 8, the PR
+     writer to push). A fix skill such as `/address-comments` runs in a
+     subagent, not in this session. Otherwise send `BLOCKED` with the
+     details.
+   - `CI_GREEN`, an approval, or `TIMEOUT`: start the watcher again.
+
+   When the repository has a post-PR policy (for example a babysit or
+   autopilot skill), follow it for what to do. Wait between its steps with
+   `pr-watch.sh` or the skill's own watcher, never with a scheduler job.
 
    Never send `DONE` while the pull request is open, even when the checks
    pass and only a human review remains. Never merge it yourself, unless the

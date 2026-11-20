@@ -23,7 +23,9 @@ show: whether the changed behavior actually works when the application runs.
 - how to reach the affected behavior (route, screen, command, endpoint);
 - any credentials, flags, seed data, or environment the scenario needs;
 - known pre-existing worktree changes;
-- the `tdd.md` path, when the TDD expert wrote tests first.
+- the `tdd.md` path, when the TDD expert wrote tests first;
+- for a re-verify (a later round, after a fix): the list of scenarios to run
+  and the diff of the fix.
 
 If the scenario, the entry point, or the environment needed to reach it is
 missing, ask the parent instead of guessing at a path that may exercise
@@ -103,12 +105,32 @@ Then exercise one adjacent case on the same code path — another persona, the
 sibling screen, the same action from its other entry point. Regressions in the
 neighbourhood are exactly what this step exists to catch.
 
+In a re-verify, run only the scenarios in the parent's list, plus the unit
+tests. Do not run the full scenario set again, and do not add scenarios of
+your own. When the list looks too narrow for the diff, say so in the return.
+
 When the change has no user-visible surface — a backend mapper, a CLI, a
 library, a migration — verify it at its real boundary instead: call the
 endpoint, run the command, query the resulting data, run the specific tests
 that cover it. Capture that output as text evidence. Say plainly that visual
 verification did not apply rather than padding the folder with screenshots
 that show nothing.
+
+## Keep images out of your context
+
+Each tool call reads your whole context again, and each image that you open
+stays in it. So:
+
+- Run a scenario with one script when you can (Playwright, Cypress, or the
+  project's end-to-end tool). The script does the steps, saves each
+  screenshot and the console and network logs to the evidence directory, and
+  prints a short text result. Use step-by-step browser tools only to find a
+  selector or to debug a step that failed.
+- Check a state with text: the page text, the accessibility snapshot, a DOM
+  query, the API response, or the logs.
+- Save screenshots to files and do not open them one by one. Open an image
+  only when text cannot prove the point, for example a layout or a visual
+  state.
 
 ## Bugs: two tries, never forced
 

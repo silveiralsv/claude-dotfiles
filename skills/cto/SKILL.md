@@ -1,6 +1,6 @@
 ---
 name: cto
-description: Run one long-lived CTO session per Herdr space. The CTO takes tickets from the user, opens one Lead tab per ticket (each Lead runs /orchestrated-development and owns its ticket), keeps a queue and a status board, checks for conflicts between tickets, relays each plan and blocker to the user, tells the user every 30 minutes whether it needs them, and closes tabs when tickets finish. It never reads code deeply, reviews diffs, or runs apps. Needs herdr-core (`hc`, with `HC_TERMINAL_ID` set). Use when the user says "/cto", "start the CTO", "be the CTO of this space", "open a lead for this ticket", "status of the leads", "vira o CTO desse space", "inicia o CTO", "abre um lead para esse ticket", "status dos leads", or "quais leads estão rodando".
+description: Run one long-lived CTO session per Herdr space. The CTO takes tickets from the user, opens one Lead tab per ticket (each Lead runs /orchestrated-development and owns its ticket), keeps a queue and a status board, checks for conflicts between tickets, relays each plan and blocker to the user, tells the user every 30 minutes whether it needs them, closes tabs when tickets finish, and removes the worktrees of merged pull requests. It never reads code deeply, reviews diffs, or runs apps. Needs herdr-core (`hc`, with `HC_TERMINAL_ID` set). Use when the user says "/cto", "start the CTO", "be the CTO of this space", "open a lead for this ticket", "status of the leads", "vira o CTO desse space", "inicia o CTO", "abre um lead para esse ticket", "status dos leads", or "quais leads estão rodando".
 ---
 
 # CTO
@@ -126,6 +126,9 @@ Run these steps on every `/cto`.
      until it merges.
    - A "could not check" line usually means that `gh` is not logged in.
      Show it to the user before you decide on that ticket.
+   - Remove the leftovers of merged work: run `worktree-sweep.sh` (see
+     "Close") in the background, with every repo named in this space's state
+     files.
 
 7. Arm the check-in. See "Check-in".
 
@@ -256,13 +259,15 @@ pane shows the title and links the ticket id to `url`.
    `hc run` does not inherit this session's environment. So pass the CTO's
    `CLAUDE_CONFIG_DIR` through, or unset it when the CTO has none:
 
+   Leads run at effort `high`. The workers set their own effort.
+
    ```sh
    SPACE=$(hc get "$HC_TERMINAL_ID" --json | jq -r '.labels["herdr.space"]')
    hc run --bg --outlive-parent --json --name lead-<slug> \
      --label herdr.space="$SPACE" --label role=lead --label ticket=<TICKET> \
      --cwd ~/www/<repo>-<slug> \
-     env -u CLAUDE_CONFIG_DIR ${CLAUDE_CONFIG_DIR:+CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR"} \
-     claude --dangerously-skip-permissions "$(cat ~/claude-workflows/<TICKET>/brief.md)"
+     env -u CLAUDE_CONFIG_DIR -u CLAUDE_EFFORT ${CLAUDE_CONFIG_DIR:+CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR"} \
+     claude --dangerously-skip-permissions --effort high "$(cat ~/claude-workflows/<TICKET>/brief.md)"
    ```
 
    After the spawn, `hc read lead-<slug>` must show the same account in the
@@ -386,7 +391,20 @@ Keep the reply short. Do not show the board.
   cancels the ticket. A Lead with an open pull request stays open.
 - Run `hc kill lead-<slug>; hc rm lead-<slug>`.
 - Keep the state file and the evidence.
-- Never delete a worktree. When the ticket has one, tell the user where it
+- After a merge, remove the leftovers. Run `worktree-sweep.sh` from this
+  skill's base directory in the background, after `hc kill`:
+
+  ```sh
+  <this skill's base directory>/worktree-sweep.sh ~/www/<repo>
+  ```
+
+  It removes every worktree of the repo whose pull request is merged, and its
+  local branch. It keeps a worktree with changed or untracked files, commits
+  that the merged pull request does not have, or a process inside it, and
+  prints why. It never uses `--force` and never touches the main checkout.
+  Tell the user in one line what it removed and what it kept.
+- When a ticket closes without a merge (cancelled, or a pull request closed
+  without a merge), do not remove its worktree. Tell the user where it
   remains.
 - When the user cancels, set `cancelled` in the state file, then close.
 - Start the next queued ticket.

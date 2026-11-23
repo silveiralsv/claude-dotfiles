@@ -21,6 +21,10 @@ before.
   has no state file yet. Use the session scheduler (for example
   `CronCreate`), and arm it again when it expires. Never block in a wait
   loop.
+- `/auto-intake --accept-recommendations <TICKET> ...`: as the first form,
+  and the Lead also takes its own recommendation for product decisions
+  (gate 5). Add `accept: recommendations` to the state file and
+  `Accept: recommendations` to the brief, after `Auto-intake: on`.
 - `/auto-intake off`: stop the watch. Marked tickets keep their mark.
 - `/auto-intake status`: list the marked tickets and their gate results.
 
@@ -50,20 +54,53 @@ as usual (at `PLAN_READY`), with one line on top:
   solution that the reporter wants. A bug states the expected result, what
   happens, the trigger, and the environment.
 - **2. Reproduces?** (Lead, bugs only.) See the Lead's `## Auto-intake gates`.
-- **3. Small impact?** (Lead.) See the Lead's `## Auto-intake gates`.
-- **4. Trusted area?** The ticket and the plan do not touch security,
-  authentication, authorization, billing, privacy, migrations or schema,
-  concurrency, or more than one system.
-- **5. No decisions for you?** (Lead.) The plan's `## Decisions for you`
-  says None.
+- **3. Bounded impact?** (Lead.) The plan's `3 blast radius` line names
+  the class, who uses the changed code today, the worst failure, how to
+  revert, and the regression set, with a run that proves the bound. See the
+  Lead's `## Auto-intake gates`.
+- **4. Blast radius not red?** Classify the ticket before the spawn, and the
+  plan again at `PLAN_READY`. The class follows who already uses the code
+  that changes, not the topic: a new auth check is not red by itself.
+  - **Red** (no): it changes how existing users sign in or what they may do
+    (login, session, tokens, identity provider, existing roles or
+    permissions, middleware on every request or response); a migration that
+    changes or fills existing rows (backfill, `NOT NULL`, drop, rename);
+    billing or money; email, SMS, or webhooks to real recipients; external
+    or production configuration (DNS, providers, an env var that must exist
+    before the deploy); production data; more than one system that must
+    deploy in order; or an area that the brief marks risky.
+  - **Yellow** (yes, with the regression rule): auth or permissions for a
+    new surface (route, page, endpoint) behind a flag that is off in
+    production, or that no user has today; a security fix that restricts
+    one route or check (owner, scope, allowlist) of existing flows; an
+    additive schema change without a backfill; a change to a shared
+    component whose callers are listed. Regression rule: the evidence
+    verifier compares main and the branch for each existing persona on the
+    regression set. A difference that the plan does not ask for stops the
+    ticket before the pull request (the Lead sends `BLOCKED`).
+  - **Green** (yes): everything else.
+- **5. No product decisions?** (Lead.) The plan's `## Decisions for you`
+  has no product decision: UX, copy, policy, who may do what, cost, or a
+  question for someone outside the team. The Lead settles technical choices
+  itself. With `accept: recommendations`, the Lead also takes its
+  recommendation for product decisions and lists them in `## Decisions
+  taken`.
+
+The user can relax the gates for a ticket or a project, for example
+"everything is behind a feature flag, accept the recommendations, keep
+going". Write the user's words in each state file's `## Decisions`, and
+apply them at each gate. A waiver covers only what the user names.
 
 ## At PLAN_READY of a marked ticket
 
 1. Read `## Auto-intake gates` in the plan. Check gate A again, and gate 4
-   against the plan's files.
+   against the plan's `3 blast radius` line and files.
 2. Any no: show the plan as the `cto` skill says, with the gate line on top.
-3. All yes: open the veto window. Tell the user, in the user's language:
-   `<TICKET>: auto mode em 10 min. Responda "STOP <TICKET>" para ver o plano antes.`
+3. All yes: open the veto window. Tell the user, in the user's language,
+   with the class and the decisions that the Lead took:
+   `<TICKET>: auto mode em 10 min (<class>: <one line>). Decisões tomadas: <list | nenhuma>. Responda "STOP <TICKET>" para ver o plano antes.`
+   For a yellow ticket, or when the Lead took a product decision, put the
+   line `Preciso de você:` before it, so that it reaches the user's phone.
    Arm a one-time check in 10 minutes with the session scheduler, and end the
    turn.
 4. When the check fires: if the user sent `STOP <TICKET>`, show the plan as
@@ -71,7 +108,9 @@ as usual (at `PLAN_READY`), with one line on top:
    `auto-approved after the veto window` to the state file's `## Log`.
 
 The Lead then works as usual until the pull request. The user approves the
-pull request. Never merge.
+pull request. Never merge. A `BLOCKED` from a yellow ticket whose regression
+found a difference goes to the user as the `cto` skill says, with
+`auto-intake: the regression found a difference` on top.
 
 ## Rules
 

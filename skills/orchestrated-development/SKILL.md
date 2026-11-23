@@ -452,12 +452,26 @@ with these rules:
     write `no`.
     - `2 reproduces:` bugs only; features write `n/a`. `yes` only when the
       step 2 reproduction says Reproduced.
-    - `3 small impact:` the one fact that makes the change safe, and how
-      you proved it by running code (a test, a query, a run). An argument
-      alone is `no`.
-    - `5 no decisions:` `yes` only when `## Decisions for you` says None.
-      Settle a choice yourself when a test or a prototype can answer it.
-      Product and preference choices stay with the user.
+    - `3 blast radius:` `green`, `yellow`, or `red` (the classes are in
+      the `auto-intake` skill, gate 4), then four facts: who uses the
+      changed code today, the worst failure, how to revert, and the
+      regression set. Prove the bound by running code: a flag query that
+      shows the flag off in production, a count that shows that no user has
+      it, or a `git grep` of the callers that the regression set covers. Do
+      not try to prove the change itself, which does not exist yet. `red`
+      means `no`.
+    - `5 no product decisions:` `yes` when `## Decisions for you` has no
+      product decision: UX, copy, policy, who may do what, cost, or a
+      question for someone outside the team. Settle technical choices
+      yourself, and write the reason in `## Decisions`. Following the
+      ticket or the spec is not a decision. With `Accept: recommendations`
+      in the brief, also take your recommendation for product decisions,
+      and list each one under `## Decisions taken`.
+
+    For a `yellow` ticket, the evidence verifier compares main and the
+    branch for each existing persona on the regression set. A difference
+    that the plan does not ask for: do not open the pull request. Send
+    `BLOCKED` with the difference.
 
     If the brief says `Auto-intake: verify <url>`, a fix already exists.
     Skip the plan gate and do not change code. Spawn the evidence verifier

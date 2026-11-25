@@ -378,8 +378,9 @@ with these rules:
    uses that list to find conflicts between tickets. At every status change
    and every report, append one line to `## Log`:
    `- <ISO 8601 time with offset> <what happened>`, for example
-   `- 2026-11-10T14:05:00-03:00 plan_ready: plan.md`. The CTO board shows
-   these lines.
+   `- 2026-11-10T14:05:00-03:00 plan_ready: plan.md`. Take the time for
+   this line and for `updated` from `date +%FT%T%z` when you write them;
+   never estimate it. The CTO board shows these lines.
 3. Plan gate. After step 3, write the plan to
    `~/claude-workflows/<TICKET>/plan.md`, with the summary for the user
    first (step 3), in the `/ste-explain` style when that skill is

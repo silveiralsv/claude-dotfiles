@@ -1,7 +1,8 @@
 // Self-check for parse.js: node herdr/mods/cto-board/parse.check.mjs
 process.env.TZ = "America/Sao_Paulo"; // -03:00 all year, so local times are fixed
 import assert from "node:assert/strict";
-import { parseTime, parseState, mdPath, prUrl, steps, ago, hhmm } from "./parse.js";
+import { execFileSync } from "node:child_process";
+import { parseTime, parseState, mdPath, prUrl, steps, ago, hhmm, LIST_STATES, splitStates } from "./parse.js";
 
 // The three time forms Leads write, all the same instant here.
 for (const s of ["2026-11-10T13:00", "2026-11-10T13:00:00-03", "2026-11-10T13:00:00-03:00", "2026-11-10T16:00:00Z"])
@@ -45,7 +46,6 @@ assert.equal(s16306.files, 0);
 assert.equal(s16306.log.length, 3);
 assert.equal(s16306.log[0].at.toISOString(), "2026-11-10T15:57:00.000Z");
 assert.equal(s16306.last.text, "story moved to In Review; comment watcher armed (15 min poll, log: watch.log, output: new-comments.json)");
-assert.ok(steps("monitoring").every((x) => x.state === "off"));
 assert.equal(mdPath(s16306.log[1].text, "/h/claude-workflows/sc-16306", "/h"), "/h/claude-workflows/sc-16306/findings.md");
 
 // sc-16210: "- none", blocked, a bare md name in an older line, none in the last.
@@ -137,8 +137,24 @@ assert.equal(names("implementing"), "done:✓ Plano done:✓ Testes current:Impl
 assert.equal(names("verifying"), "done:✓ Plano done:✓ Testes done:✓ Implementa current:Verifica todo:PR todo:Fim");
 assert.equal(names("publishing"), "done:✓ Plano done:✓ Testes done:✓ Implementa done:✓ Verifica current:PR todo:Fim");
 assert.equal(names("pr_open"), "done:✓ Plano done:✓ Testes done:✓ Implementa done:✓ Verifica current:PR aberto todo:Fim");
+assert.equal(names("monitoring"), "done:✓ Plano done:✓ Testes done:✓ Implementa done:✓ Verifica current:Monitorando todo:Fim");
 assert.equal(names("done"), "done:✓ Plano done:✓ Testes done:✓ Implementa done:✓ Verifica done:✓ PR current:Fim");
 for (const s of ["blocked", "failed", "queued", undefined]) assert.ok(steps(s).every((x) => x.state === "off"), String(s));
+
+// Another machine's state files: LIST_STATES run by sh, split back into home and files.
+const tmp = execFileSync("mktemp", ["-d"]).toString().trim();
+execFileSync("sh", ["-c", `mkdir -p "$1/claude-workflows/A-1" "$1/claude-workflows/B-2" "$1/claude-workflows/C-3"
+  printf -- '---\\nspace: sp1\\nstatus: verifying\\n---\\n' > "$1/claude-workflows/A-1/state.md"
+  printf -- '---\\nspace: sp2\\n---\\n' > "$1/claude-workflows/B-2/state.md"
+  printf 'no frontmatter' > "$1/claude-workflows/C-3/state.md"`, "sh", tmp]);
+const list = (home, space) => splitStates(execFileSync("sh", ["-c", LIST_STATES, "sh", space], { env: { ...process.env, HOME: home } }).toString());
+const listed = list(tmp, "sp1");
+assert.equal(listed.home, tmp);
+assert.deepEqual(listed.states.map((x) => x.dir), [`${tmp}/claude-workflows/A-1`]);
+assert.equal(parseState(listed.states[0].text, "A-1").status, "verifying");
+assert.deepEqual(list(tmp, "sp2").states.map((x) => x.dir), [`${tmp}/claude-workflows/B-2`]);
+execFileSync("rm", ["-rf", tmp]);
+assert.deepEqual(list("/nowhere", "sp1"), { home: "/nowhere", states: [] });
 
 // Relative time and clock.
 const now = Date.parse("2026-11-10T17:00:00Z");

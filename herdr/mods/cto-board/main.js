@@ -4,9 +4,8 @@
 
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView } from "gpui-base";
-import * as fs from "fs/promises";
-import { spaces, terminals, props, theme, settings, run, hc, home, readTextFile, watchFolder, openOverlay, closeOverlay, notify, playSound } from "herdr";
-import { parseState, mdPath, steps, ago, hhmm } from "./parse.js";
+import { spaces, terminals, props, theme, settings, run, hc, exec, home, readTextFile, watchFolder, openOverlay, closeOverlay, notify, playSound } from "herdr";
+import { parseState, mdPath, steps, ago, hhmm, LIST_STATES, splitStates } from "./parse.js";
 
 const ASK = { plan_ready: "plano pronto", blocked: "bloqueado" };
 const WAIT = { plan_ready: "esperando a sua aprovação do plano", blocked: "esperando a sua resposta" }; // "agora" without a live message
@@ -15,7 +14,10 @@ const DAY = 86400000;
 
 const mono = () => settings().font_family ?? "JetBrains Mono";
 const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-const openFile = (file) => openOverlay({ mod: "cto-board", props: { file }, kind: "dialog", width: 0.6, height: 0.8 });
+const openFile = (file, on) => openOverlay({ mod: "cto-board", props: { file, on }, kind: "dialog", width: 0.6, height: 0.8 });
+// A space of this window: on this computer its id is the bare id, on another machine "<machine>/<id>".
+const spaceOf = (id) => spaces().find((s) => s.id === id || s.id.endsWith(`/${id}`)) ?? null;
+const exists = (path, on) => readTextFile(path, { on }).then((x) => x !== null, () => false);
 
 const chip = (text, color) =>
   div().flex_none().px(6).h(18).flex().items_center().rounded(5).bg(color + "26").text_size(10.5).font_semibold().text_color(color).child(text);
@@ -53,7 +55,7 @@ export default class CtoBoard extends View {
     this.tickets = [];
     this.extra = {}; // address -> { labels, name } from `hc get`, only for terminals that come without labels
     if (p.file) {
-      cx.spawn(async (cx) => { this.text = await readTextFile(p.file).catch(() => null); this.read = true; cx.notify(); });
+      cx.spawn(async (cx) => { this.text = await readTextFile(p.file, { on: p.on ?? null }).catch(() => null); this.read = true; cx.notify(); });
       return;
     }
     if (!p.space) return;
@@ -62,6 +64,7 @@ export default class CtoBoard extends View {
     // Verifiers write many screenshots: events only mark the board dirty, this timer reloads.
     cx.timer.every(2000, (cx) => { if (this.dirty) this.reload(cx); });
     cx.timer.every(30000, (cx) => this.reload(cx));
+    if (spaceOf(p.space)?.machine) return; // another machine: no watch here, the 30 s reload reads it
     cx.spawn(async (cx) => {
       try {
         for (;;) {
@@ -75,40 +78,49 @@ export default class CtoBoard extends View {
   }
 
   reload(cx) {
-    if (this.loading) return;
-    this.loading = true;
+    // A call that never returns (a dropped SSH link) must not freeze the board: after 60 s, reload again.
+    if (this.loading && Date.now() - this.loading < 60000) return;
+    const mine = (this.loading = Date.now());
     this.dirty = false;
     cx.spawn(async (cx) => {
       try {
         const space = props().space;
-        const names = (await fs.readdir(this.dir, { withFileTypes: true }).catch(() => [])).filter((d) => d.isDirectory()).map((d) => d.name);
-        const tickets = (await Promise.all(names.map(async (name) => {
-          const text = await readTextFile(`${this.dir}/${name}/state.md`).catch(() => null);
-          if (!text) return null;
+        const on = spaceOf(space)?.machine ?? null;
+        // The state files live on the space's machine. One exec reads them all: a read per file
+        // overflows the 1024 host tasks that every mod copy shares. Unreachable: keep the last board.
+        const got = await exec("sh", ["-c", LIST_STATES, "sh", space], { on, timeout: 20000 }).then((r) => splitStates(r.stdout), () => null);
+        if (!got) return;
+        const tickets = (await Promise.all(got.states.map(async ({ dir, text }) => {
+          const name = dir.split("/").pop();
           const s = parseState(text, name);
           if (s.space !== space) return null;
           s.key = name;
-          s.dir = `${this.dir}/${name}`;
-          const md = s.status === "blocked" ? mdPath(s.last?.text, s.dir, home()) : null;
-          s.md = md && (await fs.exists(md).catch(() => false)) ? md : null;
+          s.dir = dir;
+          s.on = on;
+          const md = s.status === "blocked" ? mdPath(s.last?.text, dir, got.home) : null;
+          s.md = md && (await exists(md, on)) ? md : null;
           return s;
         }))).filter(Boolean);
-        await this.fillLabels();
+        await this.fillLabels(cx, on);
+        if (mine !== this.loading) return; // a newer reload took over
         this.alert(tickets);
         this.tickets = tickets;
         this.loadedAt = new Date();
       } finally {
-        this.loading = false;
+        if (mine === this.loading) this.loading = 0;
         cx.notify();
       }
     });
   }
 
   // terminals() carries labels and name; this fallback reads `hc get` once per address when not.
-  async fillLabels() {
+  // Only the terminals of the space's machine, and 5 s at most each: another machine's dropped
+  // link must not hold this board.
+  async fillLabels(cx, on) {
     for (const t of terminals()) {
       if (t.state !== "live" || t.labels || this.extra[t.address]) continue;
-      const r = await hc(["get", t.address, "--json"]).catch(() => null);
+      if ((t.address.includes("/") ? t.address.split("/")[0] : null) !== on) continue;
+      const r = await Promise.race([hc(["get", t.address, "--json"]).catch(() => null), cx.sleep(5000).then(() => null)]);
       try {
         const j = JSON.parse(r.stdout);
         this.extra[t.address] = { labels: j.labels ?? {}, name: j.name };
@@ -153,10 +165,9 @@ export default class CtoBoard extends View {
     const p = props() ?? {};
     if (p.file) return this.planView(t, p);
     const root = v_flex().id("cto-board").size_full().min_h(0).bg(t.surface).text_color(t.foreground).text_size(12.5);
-    const space = p.space && spaces().find((s) => s.id === p.space);
+    const space = p.space && spaceOf(p.space);
     const problem = !p.space ? "Space não informado."
-      : !space ? `Space ${p.space} não existe nesta janela.`
-      : space.machine ? "O painel só lê spaces desta máquina." : null;
+      : !space ? `Space ${p.space} não existe nesta janela.` : null;
     if (problem) return root.p(16).child(div().text_color(t.muted).child(problem));
 
     const now = Date.now();
@@ -208,8 +219,8 @@ export default class CtoBoard extends View {
 
   needCard(t, { s, lead, why }, now) {
     const buttons = [];
-    if (s.status === "plan_ready") buttons.push(button(t, `plan-${s.key}`, "Abrir plano", () => openFile(`${s.dir}/plan.md`)));
-    if (s.status === "blocked" && s.md) buttons.push(button(t, `md-${s.key}`, "Abrir", () => openFile(s.md)));
+    if (s.status === "plan_ready") buttons.push(button(t, `plan-${s.key}`, "Abrir plano", () => openFile(`${s.dir}/plan.md`, s.on)));
+    if (s.status === "blocked" && s.md) buttons.push(button(t, `md-${s.key}`, "Abrir", () => openFile(s.md, s.on)));
     if (lead) buttons.push(button(t, `go-${s.key}`, "Ir para a tab", () => run("agent.focus", { terminal: lead.address })));
     return card(t, `need-${s.key}`, t.blocked)
       .child(s.title ? title(s.title) : div().truncate().text_color(t.muted).child(s.last?.text ?? ""))

@@ -74,12 +74,24 @@ export function mdPath(text, dir, home) {
   return f.startsWith("~/") ? home + f.slice(1) : f.startsWith("/") ? f : `${dir}/${f}`;
 }
 
+// The state files of space $1, as one `exec` prints them: the home, then
+// "\x1e<path of state.md>\n<text>" for each file.
+export const LIST_STATES = 'printf %s "$HOME"; for f in "$HOME"/claude-workflows/*/state.md; do grep -q "^space:.*$1" "$f" 2>/dev/null && printf \'\\036%s\\n\' "$f" && cat "$f"; done; true';
+export function splitStates(out) {
+  const [home, ...files] = (out ?? "").split("\x1e");
+  const states = files.map((f) => {
+    const nl = f.indexOf("\n");
+    return { dir: f.slice(0, nl).replace(/\/state\.md$/, ""), text: f.slice(nl + 1) };
+  });
+  return { home, states };
+}
+
 // The last pull request URL in the text.
 export const prUrl = (text) => (text ?? "").match(/https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/g)?.at(-1) ?? null;
 
 export const STEPS = ["Plano", "Testes", "Implementa", "Verifica", "PR", "Fim"];
 // status: [current step, its label when not the step name]
-const STAGE = { planning: [0], plan_ready: [0, "Plano pronto"], testing: [1], implementing: [2], verifying: [3], publishing: [4], pr_open: [4, "PR aberto"], done: [5] };
+const STAGE = { planning: [0], plan_ready: [0, "Plano pronto"], testing: [1], implementing: [2], verifying: [3], publishing: [4], pr_open: [4, "PR aberto"], monitoring: [4, "Monitorando"], done: [5] };
 
 // Each step as { name, state: "done" | "current" | "todo" | "off" }; "off" for statuses off the path.
 export function steps(status) {
